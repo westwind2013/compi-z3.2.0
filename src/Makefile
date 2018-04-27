@@ -1,15 +1,13 @@
-YICES_DIR=/home/westwind/myInstall/Develop/yices-1.0.40
-
 CC=mpicxx
-CFLAGS = -I. -I$(YICES_DIR)/include -I/usr/include/mpich/ -Wall -std=c++0x -O0 -g
+CFLAGS = -I. -I$(Z3_DIR)/include -I/usr/include/mpich/ -Wall -std=c++0x -O0 -g -fpermissive
 CXXFLAGS = $(CFLAGS)
-LDFLAGS = -L$(YICES_DIR)/lib -L/usr/lib/x86_64-linux-gnu -O0 -g
-LOADLIBES = -lyices -lmpich -lopa -lmpl -lrt -lcr -lpthread
+LDFLAGS = -L$(Z3_DIR)/lib -L/usr/lib/x86_64-linux-gnu -O0 -g
+LOADLIBES = -lz3 -lmpich -lopa -lmpl -lrt -lcr -lpthread
 
 BASE_LIBS = base/basic_types.o base/symbolic_execution.o \
             base/symbolic_interpreter.o base/symbolic_path.o \
             base/symbolic_predicate.o base/symbolic_expression.o \
-            base/yices_solver.o
+            base/z3_solver.o
 
 
 all: libcrest/libcrest.a run_crest/run_crest \

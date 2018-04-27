@@ -19,7 +19,7 @@
 #include "mpi.h"
 
 #include "base/symbolic_interpreter.h"
-#include "base/yices_solver.h"
+#include "base/z3_solver.h"
 
 using std::make_pair;
 using std::swap;
@@ -126,8 +126,8 @@ namespace crest {
 
 	void SymbolicInterpreter::ClearStack(id_t id) {
 		IFDEBUG(fprintf(stderr, "clear\n"));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		for (vector<StackElem>::const_iterator it = stack_.begin();
+		
+        for (vector<StackElem>::const_iterator it = stack_.begin();
 				it != stack_.end(); ++it) {
 			delete it->expr;
 		}
@@ -139,8 +139,8 @@ namespace crest {
 
 	void SymbolicInterpreter::Load(id_t id, addr_t addr, value_t value) {
 		IFDEBUG(fprintf(stderr, "load %lu %lld\n", addr, value));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		ConstMemIt it = mem_.find(addr);
+		
+        ConstMemIt it = mem_.find(addr);
 		if (it == mem_.end()) {
 			PushConcrete(value);
 		} else {
@@ -152,8 +152,8 @@ namespace crest {
 
 	void SymbolicInterpreter::Store(id_t id, addr_t addr) {
 		IFDEBUG(fprintf(stderr, "store %lu\n", addr));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		assert(stack_.size() > 0);
+		
+        assert(stack_.size() > 0);
 
 		const StackElem& se = stack_.back();
 		if (se.expr) {
@@ -174,8 +174,8 @@ namespace crest {
 
 	void SymbolicInterpreter::ApplyUnaryOp(id_t id, unary_op_t op, value_t value) {
 		IFDEBUG(fprintf(stderr, "apply1 %d %lld\n", op, value));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		assert(stack_.size() >= 1);
+		
+        assert(stack_.size() >= 1);
 		StackElem& se = stack_.back();
 
 		if (se.expr) {
@@ -210,8 +210,8 @@ namespace crest {
 	void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op,
 			value_t value) {
 		IFDEBUG(fprintf(stderr, "apply2 %d %lld\n", op, value));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		assert(stack_.size() >= 2);
+		
+        assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
 
@@ -280,8 +280,8 @@ namespace crest {
 	void SymbolicInterpreter::ApplyCompareOp(id_t id, compare_op_t op,
 			value_t value) {
 		IFDEBUG(fprintf(stderr, "compare2 %d %lld\n", op, value));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		assert(stack_.size() >= 2);
+		
+        assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
 
@@ -316,14 +316,13 @@ namespace crest {
 
 	void SymbolicInterpreter::Call(id_t id, function_id_t fid) {
 		IFDEBUG(fprintf(stderr, "call %u\n", fid));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
-		ex_.mutable_path()->Push(kCallId);
+		
+        ex_.mutable_path()->Push(kCallId);
 		IFDEBUG(DumpMemory());
 	}
 
 	void SymbolicInterpreter::Return(id_t id) {
 		IFDEBUG(fprintf(stderr, "return\n"));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
 
 		ex_.mutable_path()->Push(kReturnId);
 
@@ -338,7 +337,6 @@ namespace crest {
 
 	void SymbolicInterpreter::HandleReturn(id_t id, value_t value) {
 		IFDEBUG(fprintf(stderr, "handle_return %lld\n", value));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
 
 		if (return_value_) {
 			// We just returned from an instrumented function, so the stack
@@ -358,7 +356,6 @@ namespace crest {
 
 	void SymbolicInterpreter::Branch(id_t id, branch_id_t bid, bool pred_value) {
 		IFDEBUG(fprintf(stderr, "branch %d %d\n", bid, pred_value));
-		IFDEBUG_H(if (id > 2760 && id < 2800) fprintf(stderr, "id: %d ; stack's size: %d\n", id, stack_.size()));
 //
 // hEdit: debug
 //

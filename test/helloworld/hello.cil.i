@@ -93,7 +93,7 @@ extern struct _IO_FILE *stdout ;
 extern int fflush(FILE *__stream ) ;
 # 362 "/usr/include/stdio.h"
 extern int printf(char const * __restrict __format , ...) ;
-# 226 "/home/westwind/myInstall/Develop/crest.mpi/bin/../include/crest.h"
+# 226 "/home/westwind/myInstall/Develop/compi/bin/../include/crest.h"
 extern void __CrestIntWithLimit(int *x , long long limit ) __attribute__((__crest_skip__)) ;
 # 5 "hello.c"
 int main(int argc , char **argv )

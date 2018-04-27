@@ -2616,8 +2616,8 @@ extern void funlockfile (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)
 # 943 "/usr/include/stdio.h" 3 4
 
 # 3 "hello.c" 2
-# 1 "/home/westwind/myInstall/Develop/crest.mpi/bin/../include/crest.h" 1
-# 137 "/home/westwind/myInstall/Develop/crest.mpi/bin/../include/crest.h"
+# 1 "/home/westwind/myInstall/Develop/compi/bin/../include/crest.h" 1
+# 137 "/home/westwind/myInstall/Develop/compi/bin/../include/crest.h"
  typedef enum {
 
   __CREST_ADD = 0,
@@ -2648,7 +2648,7 @@ extern void funlockfile (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)
   __CREST_NOT = 20,
   __CREST_L_NOT = 21,
  };
-# 177 "/home/westwind/myInstall/Develop/crest.mpi/bin/../include/crest.h"
+# 177 "/home/westwind/myInstall/Develop/compi/bin/../include/crest.h"
 extern void __CrestInit() __attribute__((crest_skip));
 extern void __CrestGetMPIInfo() __attribute__((crest_skip));
 extern void __CrestLoad(int, unsigned long int, long long int) __attribute__((crest_skip));
@@ -2661,7 +2661,7 @@ extern void __CrestBranchOnly(int) __attribute__((crest_skip));
 extern void __CrestCall(int, unsigned int) __attribute__((crest_skip));
 extern void __CrestReturn(int) __attribute__((crest_skip));
 extern void __CrestHandleReturn(int, long long int) __attribute__((crest_skip));
-# 215 "/home/westwind/myInstall/Develop/crest.mpi/bin/../include/crest.h"
+# 215 "/home/westwind/myInstall/Develop/compi/bin/../include/crest.h"
 extern void __CrestUChar(unsigned char* x) __attribute__((crest_skip));
 extern void __CrestUCharWithLimit(unsigned char* x, long long int limit) __attribute__((crest_skip));
 extern void __CrestUShort(unsigned short* x) __attribute__((crest_skip));

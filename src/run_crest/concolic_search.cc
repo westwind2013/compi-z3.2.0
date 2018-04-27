@@ -20,7 +20,7 @@
 #include <utility>
 #include <iostream>
 
-#include "base/yices_solver.h"
+#include "base/z3_solver.h"
 #include "run_crest/concolic_search.h"
 
 using std::binary_function;
@@ -61,7 +61,7 @@ namespace crest {
 	Search::Search(const string& program, int max_iterations, int comm_world_size,
         int target_rank) : program_(program), max_iters_(max_iterations), num_iters_(0), 
         is_first_run(true),  comm_world_size_(comm_world_size),
-        target_rank_(target_rank), solver(new YicesSolver()),
+        target_rank_(target_rank), solver(new Z3Solver()),
         execution_tag_(0) {
 
         start_time_ = time(NULL);

@@ -26,7 +26,7 @@
 
 #include "base/basic_types.h"
 #include "base/symbolic_execution.h"
-#include "base/yices_solver.h"
+#include "base/z3_solver.h"
 
 using std::map;
 using std::vector;
@@ -106,7 +106,7 @@ namespace crest {
 			int target_rank_;
 			
 			// YicesSolver
-			YicesSolver* solver;
+			Z3Solver* solver;
 			// records the illegal inputs to a file
 			std::ofstream outfile_illegal_inputs;
 			// remember the prior execution tag

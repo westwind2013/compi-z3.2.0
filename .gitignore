@@ -9,6 +9,8 @@ test/mpi_comm/
 test/sendrecv/
 test/sendrecv2/
 
+*.swp
+
 # Compiled Object files
 *.slo
 *.lo

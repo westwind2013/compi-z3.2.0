@@ -29,7 +29,7 @@ using std::numeric_limits;
 using std::queue;
 using std::set;
 
-#define DEBUG(x) (x)
+#define DEBUG(x)
 
 #define USE_RANGE_CHECK 1
 
@@ -179,13 +179,13 @@ namespace crest {
         //
         // hEdit: print the constraints
         //
-        for (PredIt iter = constraints.begin(); iter < constraints.end(); iter++) {
-        	string str;
-        	(*iter)->AppendToString(&str);
-        	fprintf(stderr, "%s\n", str.c_str());	
-        }
-        fprintf(stderr, "\n\n\n");
-        fflush(stderr);
+        //for (PredIt iter = constraints.begin(); iter < constraints.end(); iter++) {
+        //	string str;
+        //	(*iter)->AppendToString(&str);
+        //	fprintf(stderr, "%s\n", str.c_str());	
+        //}
+        //fprintf(stderr, "\n\n\n");
+        //fflush(stderr);
 
 		set<var_t> tmp;
 		typedef set<var_t>::const_iterator VarIt;
@@ -788,21 +788,10 @@ namespace crest {
                 (*i)->AppendToString(&s);
                 DEBUG(fprintf(stderr, "pred: %s\n", s.c_str()));
 
-                /*
-                   previous model:
-                   c1*v1 + c2*v2 + .... + cn*vn.
-                   new model:
-                   (cop stmt stmt)
-                   (bop stmt stmt)
-                   (uop stmt)
-                 */
                 int pos = 0;
                 Z3_ast pred_z3 = ParseStatement(ctx_z3, x_expr_z3, s, &pos);
                 DEBUG(fprintf(stderr, "CHECK AST: %s\n", Z3_ast_to_string(ctx_z3, pred_z3)));
-
-printf("1/2\n");
-fflush(stdout);
-
+                
                 Z3_assert_cnstr(ctx_z3, pred_z3);
             }
         }

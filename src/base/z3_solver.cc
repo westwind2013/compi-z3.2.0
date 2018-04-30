@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <utility>
 
+#include <unistd.h>
+
 #include "base/z3_solver.h"
 #include <z3.h>
 
@@ -627,16 +629,18 @@ namespace crest {
             *pos = *pos + 1;
             DEBUG(fprintf(stderr, "stmt[*pos] = %c\n", stmt[*pos]));
             if (!stmt.compare(*pos, 2, "= ")) {
+                *pos = *pos + 2;
+                pred[0] = ParseStatement(ctx, vars, stmt, pos);
+                pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                ret = Z3_mk_eq(ctx, pred[0], pred[1]);
+            } else if (!stmt.compare(*pos, 2, "/=")) {
                 *pos = *pos + 3;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
                 ret = Z3_mk_eq(ctx, pred[0], pred[1]);
-            } else if (!stmt.compare(*pos, 3, "not")) {
-                *pos = *pos + 4;
-                pred[0] = ParseStatement(ctx, vars, stmt, pos);
-                ret = Z3_mk_not(ctx, pred[0]);
+                ret = Z3_mk_not(ctx, ret);
             } else if (!stmt.compare(*pos, 2, "> ")) {
-                *pos = *pos + 3;
+                *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
                 ret = Z3_mk_gt(ctx, pred[0], pred[1]);
@@ -646,7 +650,7 @@ namespace crest {
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
                 ret = Z3_mk_le(ctx, pred[0], pred[1]);
             } else if (!stmt.compare(*pos, 2, "< ")) {
-                *pos = *pos + 3;
+                *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
                 ret = Z3_mk_lt(ctx, pred[0], pred[1]);
@@ -696,6 +700,9 @@ namespace crest {
             int end = stmt.find(' ', start);
             string val = stmt.substr(start+1, end-start);
             sscanf(val.c_str(), "%d", &vid);
+//printf("Index: %d, %c\n", *pos, stmt[*pos]);
+//printf("vars.size(): %d; vid: %d\n", vars.size(), vid);
+//fflush(stdout);
             *pos =  *pos + (end - start) + 1;
             ret = vars[vid];
         } else if(stmt[*pos] >= '0' && stmt[*pos] <= '9') {
@@ -703,18 +710,20 @@ namespace crest {
             Z3_sort ty = Z3_mk_int_sort(ctx);
             int start = *pos;
             int end = stmt.find(' ', start) + 1;
-            *pos = *pos + (end - start);
-            string val = stmt.substr(start, end-start);
+            *pos = end;
+            //*pos = *pos + (end - start);
+            string val = stmt.substr(start, end-start-1);
             ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
         } else if (stmt[*pos] == '-' || stmt[*pos] == '+') {
             /* unary */
             Z3_sort ty = Z3_mk_int_sort(ctx);
             int start = *pos;
             int end = stmt.find(' ', start) + 1;
-            *pos = *pos + (end - start);
-            string val = stmt.substr(start, end-start);
+            *pos = end;
+            string val = stmt.substr(start, end-start-1);
             ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
         }
+        
         DEBUG(fprintf(stderr, "AST: %s\n", Z3_ast_to_string(ctx, ret)));
         return ret;
     }

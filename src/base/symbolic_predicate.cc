@@ -32,7 +32,7 @@ namespace crest {
 		s->append(symbol[op_]);
 		s->push_back(' ');
 		expr_->AppendToString(s);
-		s->append(" 0)");
+		s->append(" 0 )");
 	}
 
 	void SymbolicPred::Serialize(string* s) const {

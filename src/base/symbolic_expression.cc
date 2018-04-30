@@ -72,11 +72,12 @@ namespace crest {
 
 		for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
 
-			sprintf(buff, " (* %lld x%u)", i->second, i->first);
+			sprintf(buff, " (* %lld x%u )", i->second, i->first);
 			s->append(buff);
 		}
 
-		s->push_back(')');
+        *s += " )";
+		//s->push_back(' )');
 	}
 
 

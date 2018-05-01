@@ -64,8 +64,8 @@ namespace crest {
 		return false;
 	}
 
-
-	void SymbolicExpr::AppendToString(string* s) const {
+/*
+    void SymbolicExpr::AppendToString(string* s) const {
 		char buff[32];
 		sprintf(buff, "(+ %lld", const_);
 		s->append(buff);
@@ -78,6 +78,21 @@ namespace crest {
 
         *s += " )";
 		//s->push_back(' )');
+	}
+*/
+	
+    void SymbolicExpr::AppendToString(string* s) const {
+		
+        char buff[32];
+		sprintf(buff, "%lld ", const_);
+		s->append(buff);
+
+        for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
+            
+			sprintf(buff, "(* %lld x%u ) ", i->second, i->first);
+			s->append(buff);
+            *s = "(+ " + *s + ") ";
+		}
 	}
 
 

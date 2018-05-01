@@ -28,12 +28,24 @@ namespace crest {
 
 	void SymbolicPred::AppendToString(string* s) const {
 		const char* symbol[] = { "=", "/=", ">", "<=", "<", ">=" };
+		expr_->AppendToString(s);
+		
+        string tmp;
+        tmp.push_back('(');
+        tmp.append(symbol[op_]);
+
+        *s = tmp + ' ' + *s + "0 )";
+	}
+
+/*
+	void SymbolicPred::AppendToString(string* s) const {
+		const char* symbol[] = { "=", "/=", ">", "<=", "<", ">=" };
 		s->push_back('(');
 		s->append(symbol[op_]);
 		s->push_back(' ');
 		expr_->AppendToString(s);
 		s->append(" 0 )");
-	}
+	}*/
 
 	void SymbolicPred::Serialize(string* s) const {
 		s->push_back(static_cast<char>(op_));

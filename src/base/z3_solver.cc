@@ -29,7 +29,7 @@ using std::numeric_limits;
 using std::queue;
 using std::set;
 
-#define DEBUG(x) (x) 
+#define DEBUG(x) 
 
 #define USE_RANGE_CHECK 1
 

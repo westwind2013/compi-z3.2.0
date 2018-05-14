@@ -274,7 +274,7 @@ class normalizeConditionalsVisitor =
 			| Lt -> Ge  | Ge -> Lt
 			| Le -> Gt  | Gt -> Le
 			| _ ->
-		invalid_arg "negateCompareOp"
+            invalid_arg "negateCompareOp"
 	in
 
 	(* hComment: transform conditional expressions into predicates *) 
@@ -284,21 +284,21 @@ class normalizeConditionalsVisitor =
 	 * smaller integral type.  However, we could safely handle casting
 	 * from smaller to larger integral types. *)
 	let rec mkPredicate e negated =
-	match e with
-		(* hComment: if(!x) --> if (x=0), i.e., recursion used to use *)
-		(* the first match and then the third match *)
-		| UnOp (LNot, e, _) -> mkPredicate e (not negated)
-		(* hComment: the predicate would be the same to the expression *)
-		(* if it is binary operation *)
-		| BinOp (op, e1, e2, ty) when isCompareOp op ->
-			if negated then
-			       BinOp (negateCompareOp op, e1, e2, ty)
-			else
-				e
-		(* this match works together with the first match *)
-		| _ ->
-		let op = if negated then Eq else Ne in
-			  BinOp (op, e, zero, intType)
+        match e with
+            (* hComment: if(!x) --> if (x=0), i.e., recursion used to use *)
+            (* the first match and then the third match *)
+            | UnOp (LNot, e, _) -> mkPredicate e (not negated)
+            (* hComment: the predicate would be the same to the expression *)
+            (* if it is binary operation *)
+            | BinOp (op, e1, e2, ty) when isCompareOp op ->
+                if negated then
+                       BinOp (negateCompareOp op, e1, e2, ty)
+                else
+                    e
+            (* this match works together with the first match *)
+            | _ ->
+                let op = if negated then Eq else Ne in
+                      BinOp (op, e, zero, intType)
 	in
 
 	(* hComment: this class is a subtype of nopCilVisitor *)
@@ -423,47 +423,47 @@ class crestInstrumentVisitor f =
 				();
 	in
 	
-	let rankMarker g i =
-                match g with
-                        | [] -> [];
-                        | h::j when (isConstant h) ->
-                                (
-                                match j with
-                                        | [] -> [];
-                                        | k::_ -> 
-                                                (
-                                                match k with 
-                                                        | Lval(_, _) ->
-                                                                [mkRank k; i]; 
-                                                        | CastE(_, _) ->
-                                                                [mkRank k; i]; 
-                                                        | AddrOf(a) ->
-                                                                (* miss the bracket cause the bug for addressOf*)
-                                                                [mkRank (addressOf a); i]; 
-                                                        | _ -> [];
-                                                )
-                                )
-                        
-                        | h::j ->
-                                (
-                                match j with
-                                        | [] -> [];
-                                        | k::_ -> 
-                                                (
-                                                match k with 
-                                                        | Lval(_, _) ->
-                                                                [mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h k]; 
-                                                        | CastE(_, _) ->
-                                                                [mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h k]; 
-                                                        | AddrOf(a) ->
-                                                                (* miss the bracket cause the bug for addressOf*)
-                                                                [mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h (addressOf a)]; 
-                                                        | _ -> [];
-                                                )
-                                )
-                        
-                        | _ -> [];
-        in
+    let rankMarker g i =
+        match g with
+            | [] -> [];
+            | h::j when (isConstant h) ->
+                (
+                match j with
+                    | [] -> [];
+                    | k::_ -> 
+                        (
+                        match k with 
+                            | Lval(_, _) ->
+                                    [mkRank k; i]; 
+                            | CastE(_, _) ->
+                                    [mkRank k; i]; 
+                            | AddrOf(a) ->
+                                    (* miss the bracket cause the bug for addressOf*)
+                                    [mkRank (addressOf a); i]; 
+                            | _ -> [];
+                        )
+                )
+            
+            | h::j ->
+                (
+                match j with
+                    | [] -> [];
+                    | k::_ -> 
+                        (
+                        match k with 
+                            | Lval(_, _) ->
+                                [mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h k]; 
+                            | CastE(_, _) ->
+                                [mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h k]; 
+                            | AddrOf(a) ->
+                                (* miss the bracket cause the bug for addressOf*)
+                                [mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h (addressOf a)]; 
+                            | _ -> [];
+                        )
+                )
+            
+            | _ -> [];
+    in
 
 	let worldSizeMarker g = 
 		match g with 
@@ -571,7 +571,7 @@ let prepareGlobalForCFG glob =
 (**) 
 let feature : featureDescr =
 { 
-(* hComment: the name of this feature. By passing-doFeatureName *)
+    (* hComment: the name of this feature. By passing-doFeatureName *)
 	(* to "cilly", we can enable this feature. *)
 	fd_name = "CrestBranch";
 	fd_enabled = ref false;
@@ -579,7 +579,8 @@ let feature : featureDescr =
 	fd_extraopt = [];
 	fd_post_check = true;
 	fd_doit =
-	function (f: file) ->
+	
+    function (f: file) ->
 		((* Simplify the code:
 		  *  - simplifying expressions with complex memory references
 		  *  - converting loops and switches into goto's and if's
@@ -611,7 +612,8 @@ let feature : featureDescr =
 		  *  - ensure that every 'if' has a non-empty else block
 		  *  - try to transform conditional expressions into predicates
 		  *    (e.g. "if (!x) {}" to "if (x == 0) {}") *)
-		 (let ncVisitor = new normalizeConditionalsVisitor in
+		 (* hComment: "s :> t" denotes s is a subtype of t *)
+         (let ncVisitor = new normalizeConditionalsVisitor in
 		 visitCilFileSameGlobals (ncVisitor :> cilVisitor) f) ;
 
 

@@ -22,34 +22,34 @@ open Cil
 let worldSizeLimit = 16
 
 let isSome o =
-  match o with
-    | Some _ -> true
-    | None   -> false
+    match o with
+        | Some _ -> true
+        | None   -> false
 
 
 
 (* hComment: remove the none *)
 let rec mapOptional f ls =
-  match ls with
-    | [] -> []
-    | (x::xs) -> (match (f x) with
-                    | None -> mapOptional f xs
-                    | Some x' -> x' :: mapOptional f xs)
+    match ls with
+        | [] -> []
+        | (x::xs) -> (match (f x) with
+            | None -> mapOptional f xs
+            | Some x' -> x' :: mapOptional f xs)
 
 
 
 let concatMap f ls =
-  let rec doIt res ls =
-    match ls with
-      | [] -> List.rev res
-      | (x::xs) -> doIt (List.rev_append (f x) res) xs
-  in
+    let rec doIt res ls =
+        match ls with
+            | [] -> List.rev res
+            | (x::xs) -> doIt (List.rev_append (f x) res) xs
+    in
     doIt [] ls
 
 
 
 let open_append fname =
-  open_out_gen [Open_append; Open_creat; Open_text] 0o700 fname
+    open_out_gen [Open_append; Open_creat; Open_text] 0o700 fname
 
 
 (*
@@ -84,22 +84,22 @@ let getNewId () = ((idCount := !idCount + 1); !idCount)
 (* hComment: bp is a 2-tuple, i.e., a pair *)
 let addBranchPair bp = (curBranches := bp :: !curBranches)
 let addFunction () = (branches := (!funCount, !curBranches) :: !branches;
-		      curBranches := [];
-		      funCount := !funCount + 1)
+curBranches := [];
+funCount := !funCount + 1)
 
 let readCounter fname =
-  try
+    try
     let f = open_in fname in
-      Scanf.fscanf f "%d" (fun x -> x)
-  with x -> 0
+        Scanf.fscanf f "%d" (fun x -> x)
+    with x -> 0
 
 let writeCounter fname (cnt : int) =
-  try
+    try
     let f = open_out fname in
-      Printf.fprintf f "%d\n" cnt ;
-      close_out f
-  with x ->
-    failwith ("Failed to write counter to: " ^ fname ^ "\n")
+        Printf.fprintf f "%d\n" cnt ;
+        close_out f
+    with x ->
+        failwith ("Failed to write counter to: " ^ fname ^ "\n")
 
 let readIdCount () = (idCount := readCounter "idcount")
 let readStmtCount () = (stmtCount := readCounter "stmtcount")
@@ -110,19 +110,19 @@ let writeStmtCount () = writeCounter "stmtcount" !stmtCount
 let writeFunCount () = writeCounter "funcount" !funCount
 
 let writeBranches () =
-  let writeFunBranches out (fid, bs) =
-    if (fid > 0) then
-      (let sorted = List.sort compare bs in
-         Printf.fprintf out "%d %d\n" fid (List.length bs) ;
-         List.iter (fun (s,d) -> Printf.fprintf out "%d %d\n" s d) sorted)
-  in
+    let writeFunBranches out (fid, bs) =
+        if (fid > 0) then
+            (let sorted = List.sort compare bs in
+             Printf.fprintf out "%d %d\n" fid (List.length bs) ;
+             List.iter (fun (s,d) -> Printf.fprintf out "%d %d\n" s d) sorted)
+    in
     try
-      let f = open_append "branches" in
-      let allBranches = (!funCount, !curBranches) :: !branches in
+        let f = open_append "branches" in
+        let allBranches = (!funCount, !curBranches) :: !branches in
         List.iter (writeFunBranches f) (List.tl (List.rev allBranches));
         close_out f
     with x ->
-      prerr_string "Failed to write branches.\n"
+        prerr_string "Failed to write branches.\n"
 
 
 
@@ -131,42 +131,42 @@ let writeBranches () =
 
 (* Visitor which walks the CIL AST, printing the (already computed) CFG. *)
 class writeCfgVisitor out firstStmtIdMap =
-object (self)
-  inherit nopCilVisitor
-  val out = out
-  val firstStmtIdMap = firstStmtIdMap
+    object (self)
+    inherit nopCilVisitor
+    val out = out
+    val firstStmtIdMap = firstStmtIdMap
 
-	(* write down the first statement's id if the function is in the list; *)
-	(* otherwise, write down the function name *)
-  method writeCfgCall f =
-		(* hComment: List.mem_assq compares the two iterm based on physical *)
-		(* equality, i.e., the address equality *)
-    if List.mem_assq f firstStmtIdMap then
-			(* hComment: sid, the unique number of the statement *)
-      Printf.fprintf out " %d" (List.assq f firstStmtIdMap).sid
-    else
-      Printf.fprintf out " %s" f.vname
+    (* write down the first statement's id if the function is in the list; *)
+    (* otherwise, write down the function name *)
+    method writeCfgCall f =
+        (* hComment: List.mem_assq compares the two iterm based on physical *)
+        (* equality, i.e., the address equality *)
+        if List.mem_assq f firstStmtIdMap then
+            (* hComment: sid, the unique number of the statement *)
+            Printf.fprintf out " %d" (List.assq f firstStmtIdMap).sid
+        else
+            Printf.fprintf out " %s" f.vname
 
 
-	(* find out all the instructions involving function calls and then call *)
-	(* writeCfgCall for them *)
-  method writeCfgInst i =
-     match i with
-				(* hComment: this instruction is of type Call. We need to get the *)
-				(* function information, i.e., f *)
-         Call(_, Lval(Var f, _), _, _) -> self#writeCfgCall f
-				(* hComment: ignore it if it is not a function call *)
-       | _ -> ()
+    (* find out all the instructions involving function calls and then call *)
+    (* writeCfgCall for them *)
+    method writeCfgInst i =
+        match i with
+            (* hComment: this instruction is of type Call. We need to get the *)
+            (* function information, i.e., f *)
+            Call(_, Lval(Var f, _), _, _) -> self#writeCfgCall f
+            (* hComment: ignore it if it is not a function call *)
+            | _ -> ()
 
-	(* hComment: *)
-  method vstmt(s) =
-    Printf.fprintf out "%d" s.sid ;
-    List.iter (fun dst -> Printf.fprintf out " %d" dst.sid) s.succs ;
-    (match s.skind with
-         Instr is -> List.iter self#writeCfgInst is
-       | _       -> ()) ;
-    output_string out "\n" ;
-    DoChildren
+    (* hComment: *)
+    method vstmt(s) =
+        Printf.fprintf out "%d" s.sid ;
+        List.iter (fun dst -> Printf.fprintf out " %d" dst.sid) s.succs ;
+        (match s.skind with
+            Instr is -> List.iter self#writeCfgInst is
+            | _       -> ()) ;
+        output_string out "\n" ;
+        DoChildren
 
 end
 
@@ -175,13 +175,13 @@ end
 
 
 let writeCfg cilFile firstStmtIdMap =
-  try
-    let out = open_append "cfg" in
-    let wcfgv = new writeCfgVisitor out firstStmtIdMap in
-    visitCilFileSameGlobals (wcfgv :> cilVisitor) cilFile ;
-    close_out out
-  with x ->
-    prerr_string "Failed to write CFG.\n"
+    try
+        let out = open_append "cfg" in
+        let wcfgv = new writeCfgVisitor out firstStmtIdMap in
+        visitCilFileSameGlobals (wcfgv :> cilVisitor) cilFile ;
+        close_out out
+    with x ->
+        prerr_string "Failed to write CFG.\n"
 
 
 
@@ -189,46 +189,45 @@ let writeCfg cilFile firstStmtIdMap =
 
 (* hComment: find the first statement for all functions in the file *)
 let buildFirstStmtIdMap cilFile =
-  let getFirstFuncStmtId glob =
-    match glob with
-			(* hComment: f.svar, the function's information; List.hd, lists *)
-			(* the first element of a list; f.sbody, bstmts, the list of *)
-			(* instructions in the function body *)
-      | GFun(f, _) -> Some (f.svar, List.hd f.sbody.bstmts)
-			(* this is not a function *)
-      | _ -> None
-  in
-		(* hComment: iterate all the functions' globals so as to find the *)
-		(* first statement for each function *)
+    let getFirstFuncStmtId glob =
+        match glob with
+        (* hComment: f.svar, the function's information; List.hd, lists *)
+        (* the first element of a list; f.sbody, bstmts, the list of *)
+        (* instructions in the function body *)
+        | GFun(f, _) -> Some (f.svar, List.hd f.sbody.bstmts)
+            (* this is not a function *)
+        | _ -> None
+    in
+    (* hComment: iterate all the functions' globals so as to find the *)
+    (* first statement for each function *)
     mapOptional getFirstFuncStmtId cilFile.globals
 
 
 
 
 let writeFirstStmtIdMap firstStmtIdMap =
-  let writeEntry out (f,s) =
-    (* To help avoid "collisions", skip static functions. *)
-    if not (f.vstorage = Static) then
-      Printf.fprintf out "%s %d\n" f.vname s.sid
-  in
-  try
-    let out = open_append "cfg_func_map" in
-    List.iter (writeEntry out) firstStmtIdMap ;
-    close_out out
-  with x ->
-    prerr_string "Failed to write (function, first statement ID) map.\n"
-		
-		
+    let writeEntry out (f,s) =
+        (* To help avoid "collisions", skip static functions. *)
+        if not (f.vstorage = Static) then
+        Printf.fprintf out "%s %d\n" f.vname s.sid
+    in
+    try
+        let out = open_append "cfg_func_map" in
+        List.iter (writeEntry out) firstStmtIdMap ;
+        close_out out
+    with x ->
+        prerr_string "Failed to write (function, first statement ID) map.\n"
+
+
 		
 		
 
 let handleCallEdgesAndWriteCfg cilFile =
-  let stmtMap = buildFirstStmtIdMap cilFile in
-	 (* hComment: write down the CFG *)
-   writeCfg cilFile stmtMap ;
-	 (* *)
-   writeFirstStmtIdMap stmtMap
-
+    let stmtMap = buildFirstStmtIdMap cilFile in
+        (* hComment: write down the CFG *)
+        writeCfg cilFile stmtMap ;
+        (* *)
+        writeFirstStmtIdMap stmtMap
 
 
 
@@ -266,66 +265,66 @@ let opType   = intType  (* enum *)
  *)
 class normalizeConditionalsVisitor =
 
-  let isCompareOp op =
-    match op with
-      | Eq -> true  | Ne -> true  | Lt -> true
-      | Gt -> true  | Le -> true  | Ge -> true
-      | _ -> false
-  in
+    let isCompareOp op =
+        match op with
+            | Eq -> true  | Ne -> true  | Lt -> true
+            | Gt -> true  | Le -> true  | Ge -> true
+            | _ -> false
+    in
 
-  let negateCompareOp op =
-    match op with
-      | Eq -> Ne  | Ne -> Eq
-      | Lt -> Ge  | Ge -> Lt
-      | Le -> Gt  | Gt -> Le
-      | _ ->
-          invalid_arg "negateCompareOp"
-  in
+    let negateCompareOp op =
+        match op with
+            | Eq -> Ne  | Ne -> Eq
+            | Lt -> Ge  | Ge -> Lt
+            | Le -> Gt  | Gt -> Le
+            | _ ->
+                invalid_arg "negateCompareOp"
+    in
 
-	(* hComment: transform conditional expressions into predicates *) 
-	(**)
-  (* TODO(jburnim): We ignore casts here because downcasting can
-   * convert a non-zero value into a zero -- e.g. from a larger to a
-   * smaller integral type.  However, we could safely handle casting
-   * from smaller to larger integral types. *)
-  let rec mkPredicate e negated =
-    match e with
-			(* hComment: if(!x) --> if (x=0), i.e., recursion used to use *)
-			(* the first match and then the third match *)
-      | UnOp (LNot, e, _) -> mkPredicate e (not negated)
-			(* hComment: the predicate would be the same to the expression *)
-			(* if it is binary operation *)
-      | BinOp (op, e1, e2, ty) when isCompareOp op ->
-          if negated then
-            BinOp (negateCompareOp op, e1, e2, ty)
-          else
-            e
-			(* this match works together with the first match *)
-      | _ ->
-          let op = if negated then Eq else Ne in
-            BinOp (op, e, zero, intType)
-  in
+    (* hComment: transform conditional expressions into predicates *) 
+    (**)
+    (* TODO(jburnim): We ignore casts here because downcasting can
+    * convert a non-zero value into a zero -- e.g. from a larger to a
+    * smaller integral type.  However, we could safely handle casting
+    * from smaller to larger integral types. *)
+    let rec mkPredicate e negated =
+        match e with
+            (* hComment: if(!x) --> if (x=0), i.e., recursion used to use *)
+            (* the first match and then the third match *)
+            | UnOp (LNot, e, _) -> mkPredicate e (not negated)
+            (* hComment: the predicate would be the same to the expression *)
+            (* if it is binary operation *)
+            | BinOp (op, e1, e2, ty) when isCompareOp op ->
+                if negated then
+                        BinOp (negateCompareOp op, e1, e2, ty)
+                else
+                    e
+            (* this match works together with the first match *)
+            | _ ->
+                let op = if negated then Eq else Ne in
+                BinOp (op, e, zero, intType)
+    in
 
 	(* hComment: this class is a subtype of nopCilVisitor *)
 	object (self)
   	inherit nopCilVisitor
 
-	
-	(* hComment: parameter s denotes a CONTROL-FLOW statement in the program *)
-  method vstmt(s) =
-		(* hComment: s.skind denotes the type of this statement *)
-    match s.skind with
-			(* hComment: this is a IF statement *)
-      | If (e, b1, b2, loc) ->
-          (* Ensure neither branch is empty. *)
-          if (b1.bstmts == []) then b1.bstmts <- [mkEmptyStmt ()] ;
-          if (b2.bstmts == []) then b2.bstmts <- [mkEmptyStmt ()] ;
-          (* Ensure the conditional is actually a predicate. *)
-          s.skind <- If (mkPredicate e false, b1, b2, loc) ;
-          DoChildren
-					
-			(* hComment: anything else, e.g., goto *)
-      | _ -> DoChildren
+
+    (* hComment: parameter s denotes a CONTROL-FLOW statement in the program *)
+    method vstmt(s) =
+        (* hComment: s.skind denotes the type of this statement *)
+        match s.skind with
+            (* hComment: this is a IF statement *)
+            | If (e, b1, b2, loc) ->
+                (* Ensure neither branch is empty. *)
+                if (b1.bstmts == []) then b1.bstmts <- [mkEmptyStmt ()] ;
+                if (b2.bstmts == []) then b2.bstmts <- [mkEmptyStmt ()] ;
+                (* Ensure the conditional is actually a predicate. *)
+                s.skind <- If (mkPredicate e false, b1, b2, loc) ;
+                DoChildren
+                    
+            (* hComment: anything else, e.g., goto *)
+            | _ -> DoChildren
 
 end
 
@@ -336,12 +335,12 @@ let addressOf : lval -> exp = mkAddrOrStartOf
 
 (* hComment: what is this? *)
 let hasAddress (_, off) =
-  let rec containsBitField off =
+    let rec containsBitField off =
     match off with
-      | NoOffset         -> false
-      | Field (fi, off) -> (isSome fi.fbitfield) || (containsBitField off)
-      | Index (_, off)  -> containsBitField off
-  in
+        | NoOffset         -> false
+        | Field (fi, off) -> (isSome fi.fbitfield) || (containsBitField off)
+        | Index (_, off)  -> containsBitField off
+    in
     not (containsBitField off)
 
 
@@ -545,7 +544,7 @@ class crestInstrumentVisitor f =
 
 			| UnOp (op, e1, _) ->
 			    (* Should skip this if we don't currently handle 'op'. *)
-								(* hComment: symbol '@' is used to concatenate two lists*)
+                (* hComment: symbol '@' is used to concatenate two lists*)
 			    (instrumentExpr e1) @ [mkApply1 op e]
 
 			| BinOp (op, e1, e2, _) ->
@@ -691,112 +690,114 @@ end
 
 
 let addCrestInitializer f =
-  let crestInitTy = TFun (voidType, Some [], false, []) in
-  let crestInitFunc = findOrCreateFunc f "__CrestInit" crestInitTy in
-  let globalInit = getGlobInit f in
+    let crestInitTy = TFun (voidType, Some [], false, []) in
+    let crestInitFunc = findOrCreateFunc f "__CrestInit" crestInitTy in
+    let globalInit = getGlobInit f in
     crestInitFunc.vstorage <- Extern ;
     crestInitFunc.vattr <- [Attr ("crest_skip", [])] ;
     prependToBlock [Call (None, Lval (var crestInitFunc), [], locUnknown)]
-                   globalInit.sbody
+    globalInit.sbody
 
 
 let prepareGlobalForCFG glob =
-  match glob with
-    (* hComment: this matches a function and prepares it for CFG information *)
-		(*  computation by Cil.computeCFGInfo *)
-    GFun(func, _) -> prepareCFG func
-		(* hComment: this is a wildcard match that matches anything that is *)
-		(* not a function *)
-  | _ -> ()
+    match glob with
+        (* hComment: this matches a function and prepares it for CFG information *)
+        (*  computation by Cil.computeCFGInfo *)
+        GFun(func, _) -> prepareCFG func
+        (* hComment: this is a wildcard match that matches anything that is *)
+        (* not a function *)
+        | _ -> ()
 
 
 (**)
 (* hComment: the entry point of this file, i.e., feature *)
 (**) 
 let feature : featureDescr =
-  { 
+{ 
     (* hComment: the name of this feature. By passing-doFeatureName *)
-		(* to "cilly", we can enable this feature. *)
-		fd_name = "CrestAll";
+    (* to "cilly", we can enable this feature. *)
+    fd_name = "CrestAll";
     fd_enabled = ref false;
     fd_description = "instrument a program for use with CREST";
     fd_extraopt = [];
     fd_post_check = true;
     fd_doit =
-      function (f: file) ->
-        ((* Simplify the code:
+    function (f: file) ->
+    (
+        (* Simplify the code:
           *  - simplifying expressions with complex memory references
           *  - converting loops and switches into goto's and if's
           *  - transforming functions to have exactly one return *)
-					
 
-					(* hComment: The simplemem.ml module allows CIL lvalues that *)
-					(* contain memory accesses to be even futher simplified via *)
-					(* the introduction of well-typed temporaries. After this *)
-					(* transformation all lvalues involve at most one memory reference. *)
-					(* @ https://people.eecs.berkeley.edu/~necula/cil/ext.html *)
-					(**)
-          Simplemem.feature.fd_doit f;
-			
-			
-					(* hComment: transform the global functions so as to make them *)
-					(* ready for CFG information generation. Details:  This function *)
-					(* converts all Break, Switch, Default and Continue Cil.stmtkinds *)
-					(* and Cil.labels into Ifs and Gotos, giving the function body a *)
-					(* very CFG-like character. This function modifies its argument in place. *)
-          iterGlobals f prepareGlobalForCFG;
-					
-					
-					(* hComment: make sure each function only have one return*)
-          Oneret.feature.fd_doit f ;	
-					
-					
-          (* To simplify later processing:
-           *  - ensure that every 'if' has a non-empty else block
-           *  - try to transform conditional expressions into predicates
-           *    (e.g. "if (!x) {}" to "if (x == 0) {}") *)
-          (let ncVisitor = new normalizeConditionalsVisitor in
-             visitCilFileSameGlobals (ncVisitor :> cilVisitor) f) ;
-						
-						
-          (* Clear out any existing CFG information. *)
-          Cfg.clearFileCFG f ;
-					
-					
-					(* hComment: why? *)
-					(**)
-          (* Read the ID and statement counts from files.  (This must
-           * occur after clearFileCFG, because clearFileCfg clobbers
-           * the statement counter.) *)
-          readIdCount () ;
-          readStmtCount () ;
-          readFunCount () ;
-					
-					
-					(* hComment: *)
-					(**)
-          (* Compute the control-flow graph. *)
-          Cfg.computeFileCFG f ;
-					
-					
-					(* hComment: why? *)
-					(**)
-          (* Adds function calls to the CFG, by building a map from
-           * function names to the first statements in those functions
-           * and by explicitly adding edges for calls to functions
-           * defined in this file. *)
-          handleCallEdgesAndWriteCfg f ;
-          
-					(* Finally instrument the program. *)
-	  			(let instVisitor = new crestInstrumentVisitor f in
-             visitCilFileSameGlobals (instVisitor :> cilVisitor) f) ;
-						
-          (* Add a function to initialize the instrumentation library. *)
-          addCrestInitializer f ;
-					
-          (* Write the ID and statement counts, the branches. *)
-          writeIdCount () ;
-          writeStmtCount () ;
-          writeFunCount () ;
-          writeBranches ());
-  }
+
+         (* hComment: The simplemem.ml module allows CIL lvalues that *)
+         (* contain memory accesses to be even futher simplified via *)
+         (* the introduction of well-typed temporaries. After this *)
+         (* transformation all lvalues involve at most one memory reference. *)
+         (* @ https://people.eecs.berkeley.edu/~necula/cil/ext.html *)
+         (**)
+        Simplemem.feature.fd_doit f;
+    
+
+        (* hComment: transform the global functions so as to make them *)
+        (* ready for CFG information generation. Details:  This function *)
+        (* converts all Break, Switch, Default and Continue Cil.stmtkinds *)
+        (* and Cil.labels into Ifs and Gotos, giving the function body a *)
+        (* very CFG-like character. This function modifies its argument in place. *)
+        iterGlobals f prepareGlobalForCFG;
+
+
+        (* hComment: make sure each function only have one return*)
+        Oneret.feature.fd_doit f ;	
+
+
+        (* To simplify later processing:
+        *  - ensure that every 'if' has a non-empty else block
+        *  - try to transform conditional expressions into predicates
+        *    (e.g. "if (!x) {}" to "if (x == 0) {}") *)
+        (let ncVisitor = new normalizeConditionalsVisitor in
+        visitCilFileSameGlobals (ncVisitor :> cilVisitor) f) ;
+
+
+        (* Clear out any existing CFG information. *)
+        Cfg.clearFileCFG f ;
+            
+            
+        (* hComment: why? *)
+        (**)
+        (* Read the ID and statement counts from files.  (This must
+        * occur after clearFileCFG, because clearFileCfg clobbers
+        * the statement counter.) *)
+        readIdCount () ;
+        readStmtCount () ;
+        readFunCount () ;
+                
+                        
+        (* hComment: *)
+        (**)
+        (* Compute the control-flow graph. *)
+        Cfg.computeFileCFG f ;
+                
+                
+        (* hComment: why? *)
+        (**)
+        (* Adds function calls to the CFG, by building a map from
+         * function names to the first statements in those functions
+         * and by explicitly adding edges for calls to functions
+         * defined in this file. *)
+        handleCallEdgesAndWriteCfg f ;
+      
+        (* Finally instrument the program. *)
+        (let instVisitor = new crestInstrumentVisitor f in
+         visitCilFileSameGlobals (instVisitor :> cilVisitor) f) ;
+                    
+        (* Add a function to initialize the instrumentation library. *)
+        addCrestInitializer f ;
+                
+        (* Write the ID and statement counts, the branches. *)
+        writeIdCount () ;
+        writeStmtCount () ;
+        writeFunCount () ;
+        writeBranches (); 
+        );
+}

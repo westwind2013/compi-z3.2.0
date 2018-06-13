@@ -28,6 +28,11 @@ namespace crest {
 		"2147483647", "4294967295", "2147483647", "18446744073709551615",
 		"9223372036854775807", };
 
+
+	// 
+    // hEdit: Add two data types, i.e., FLOAT and DOUBLE, into the 
+    // CastTo function
+    // 
 	value_t CastTo(value_t val, type_t type) {
 		switch (type) {
 			case types::U_CHAR:
@@ -51,7 +56,12 @@ namespace crest {
 			case types::LONG_LONG:
 				// Cast would do nothing in these cases.
 				return val;
-		}
+		
+			case types::FLOAT:
+				return static_cast<float>(val);
+			case types::DOUBLE:
+				return static_cast<double>(val);
+        }
 
 		// Cannot reach here.
 		assert(false);
@@ -72,10 +82,13 @@ namespace crest {
 		numeric_limits<long>::max(), numeric_limits<unsigned long long>::max(),
 		numeric_limits<long long>::max(), };
 
-	const size_t kByteSize[] = { sizeof(unsigned char), sizeof(char),
-		sizeof(unsigned short), sizeof(short), sizeof(unsigned int),
-		sizeof(int), sizeof(unsigned long), sizeof(long),
-		sizeof(unsigned long long), sizeof(long long) };
+    //
+    // hEdit: comment out unused code
+    //
+	//const size_t kByteSize[] = { sizeof(unsigned char), sizeof(char),
+	//	sizeof(unsigned short), sizeof(short), sizeof(unsigned int),
+	//	sizeof(int), sizeof(unsigned long), sizeof(long),
+	//	sizeof(unsigned long long), sizeof(long long) };
 
 }  // namespace crest
 

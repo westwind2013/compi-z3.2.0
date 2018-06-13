@@ -54,8 +54,11 @@ namespace crest {
 
 	compare_op_t NegateCompareOp(compare_op_t op);
 
-	// C numeric types.
-
+	// 
+    // hEdit: Add two data types, i.e., FLOAT and DOUBLE, into the 
+    // data type list
+    // 
+    // C numeric types.
 	namespace types {
 		enum type_t {
 			U_CHAR = 0,
@@ -67,7 +70,9 @@ namespace crest {
 			U_LONG = 6,
 			LONG = 7,
 			U_LONG_LONG = 8,
-			LONG_LONG = 9
+			LONG_LONG = 9,
+            FLOAT = 10,
+            DOUBLE = 11
 		};
 	}
 	using types::type_t;
@@ -80,7 +85,10 @@ namespace crest {
 	extern const value_t kMinValue[];
 	extern const value_t kMaxValue[];
 
-	extern const size_t kByteSize[];
+    //
+    // hEdit: comment out unused code
+    //
+	//extern const size_t kByteSize[];
 
 }  // namespace crest
 

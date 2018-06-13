@@ -386,41 +386,41 @@ stack_.clear();
 		ex_.mutable_path()->Push(bid);
 	}
 
-	value_t SymbolicInterpreter::NewInput(type_t type, addr_t addr, value_t limit) {
-		IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
+    value_t SymbolicInterpreter::NewInput(type_t type, addr_t addr, value_t limit) {
+        IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-		mem_[addr] = new SymbolicExpr(1, num_inputs_);
-		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
+        mem_[addr] = new SymbolicExpr(1, num_inputs_);
+        ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
-		value_t ret = 0;
-		if (num_inputs_ < ex_.inputs().size()) {
-			ret = ex_.inputs()[num_inputs_];
-		} else {
-			//
-                        // hEdit: get random paramters obtained from the tool
-                        //
-			
-			//if (rand_params_.size() > num_inputs_)
-			//	ret = CastTo(rand_params_[num_inputs_], type);
-			//else
-			//{
-				// When new marked variables is found, we need to
-				// generate new values for them. 
-				ret = CastTo(rand() % limit, type);	
-				// 
-				// hEdit: synchronize the value among all processes
-				//
-				MPI_Bcast(&ret, 1, MPI_LONG_LONG_INT, 0, MPI_COMM_WORLD);
-			
-			//}
-			ex_.mutable_inputs()->push_back(ret);
-		}
+        value_t ret = 0;
+        if (num_inputs_ < ex_.inputs().size()) {
+            ret = ex_.inputs()[num_inputs_];
+        } else {
+            //
+            // hEdit: get random paramters obtained from the tool
+            //
 
-		num_inputs_++;
+            //if (rand_params_.size() > num_inputs_)
+            //	ret = CastTo(rand_params_[num_inputs_], type);
+            //else
+            //{
+            // When new marked variables is found, we need to
+            // generate new values for them. 
+            ret = CastTo(rand() % limit, type);	
+            // 
+            // hEdit: synchronize the value among all processes
+            //
+            MPI_Bcast(&ret, 1, MPI_LONG_LONG_INT, 0, MPI_COMM_WORLD);
 
-		IFDEBUG(DumpMemory());
-		return ret;
-	}
+            //}
+            ex_.mutable_inputs()->push_back(ret);
+        }
+
+        num_inputs_++;
+
+        IFDEBUG(DumpMemory());
+        return ret;
+    }
 
 	value_t SymbolicInterpreter::NewInputWithLimit(type_t type, addr_t addr, value_t limit) {
 	

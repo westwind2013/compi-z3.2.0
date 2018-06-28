@@ -3,7 +3,6 @@ bin/crestc
 bin/print_execution
 bin/process_cfg
 bin/run_crest
-include/*
 mpi/
 src/process_cfg/process_cfg
 src/run_crest/run_crest
@@ -28,4 +27,3 @@ test/sendrecv2/
 # Compiled Static libraries
 *.lai
 *.la
-*.a

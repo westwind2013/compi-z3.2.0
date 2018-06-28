@@ -191,7 +191,7 @@ namespace crest {
 */	
 
 	void Search::WriteInputToFileOrDie(const string& file,
-			const vector<value_t>& input) {
+			const vector<value_double_t>& input) {
 		FILE* f = fopen(file.c_str(), "w");
 		if (!f) {
 			fprintf(stderr, "Failed to open %s.\n", file.c_str());
@@ -200,7 +200,7 @@ namespace crest {
 		}
 		
 		for (size_t j = 0; j < input.size(); j++) {
-			fprintf(f, "%lld\n", input[j]);
+			fprintf(f, "%lf\n", input[j]);
 		}
 
 		fclose(f);
@@ -228,7 +228,7 @@ namespace crest {
 	// input is generated randomly for the first run, and 
 	// then it is obtained from the TESTED process in later runs.
 	//
-    void Search::LaunchProgram(const vector<value_t>& inputs) {
+    void Search::LaunchProgram(const vector<value_double_t>& inputs) {
 
         string program_clean = program_ + "_c";
         string command;
@@ -289,7 +289,7 @@ namespace crest {
         //}
     }
 
-	void Search::RunProgram(const vector<value_t>& inputs, SymbolicExecution* ex) {
+	void Search::RunProgram(const vector<value_double_t>& inputs, SymbolicExecution* ex) {
 		if (++num_iters_ > max_iters_) {
 
 			// TODO(jburnim): Devise a better system for capping the iterations.
@@ -510,7 +510,7 @@ namespace crest {
 
 
 	bool Search::SolveAtBranch(const SymbolicExecution& ex, size_t branch_idx,
-			vector<value_t>* input) {
+			vector<value_double_t>* input) {
 
 		const vector<SymbolicPred*>& constraints = ex.path().constraints();
 
@@ -523,7 +523,7 @@ namespace crest {
 
 		vector<const SymbolicPred*> cs(constraints.begin(),
 				constraints.begin() + branch_idx + 1);
-		map<var_t, value_t> soln;
+		map<var_t, value_double_t> soln;
 		constraints[branch_idx]->Negate();
 
 		if (execution_tag_ != ex.execution_tag_) {	
@@ -554,7 +554,7 @@ namespace crest {
                 original_rank_non_default.push_back(
                         (*input)[rank_non_default_comm_indices_[i]]);
 
-            typedef map<var_t, value_t>::const_iterator SolnIt;
+            typedef map<var_t, value_double_t>::const_iterator SolnIt;
             for (SolnIt i = soln.begin(); i != soln.end(); ++i) {
                 (*input)[i->first] = i->second;
 
@@ -621,7 +621,7 @@ namespace crest {
 	void BoundedDepthFirstSearch::Run() {
 		// Initial execution (on empty/random inputs).
 		SymbolicExecution ex;
-		RunProgram(vector<value_t>(), &ex);
+		RunProgram(vector<value_double_t>(), &ex);
 		UpdateCoverage(ex);
 
 		while (true) {
@@ -664,7 +664,7 @@ DFS(i+1, cur_ex);
 	void BoundedDepthFirstSearch::DFS(size_t pos, int depth,
 			SymbolicExecution& prev_ex) {
 		SymbolicExecution cur_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 
 		const SymbolicPath& path = prev_ex.path();
 
@@ -707,7 +707,7 @@ DFS(i+1, cur_ex);
 	}
 
 	void RandomInputSearch::Run() {
-		vector<value_t> input;
+		vector<value_double_t> input;
 		RunProgram(input, &ex_);
 
 		while (true) {
@@ -722,7 +722,7 @@ DFS(i+1, cur_ex);
 
 
 	void RandomInputSearch::RandomInput(const map<var_t, type_t>& vars,
-			vector<value_t>* input) {
+			vector<value_double_t>* input) {
 		input->resize(vars.size());
 
 		for (map<var_t, type_t>::const_iterator it = vars.begin(); it != vars.end();
@@ -771,6 +771,12 @@ DFS(i+1, cur_ex);
 				case types::LONG_LONG:
 					input->at(it->first) = (long long) val;
 					break;
+				case types::FLOAT:
+					input->at(it->first) = (float) val;
+					break;
+				case types::DOUBLE:
+					input->at(it->first) = (double) val;
+					break;
 			}
 		}
 	}
@@ -792,7 +798,7 @@ DFS(i+1, cur_ex);
 		while (true) {
 			// Execution (on empty/random inputs).
 			fprintf(stderr, "RESET\n");
-			vector<value_t> next_input;
+			vector<value_double_t> next_input;
 			RunProgram(next_input, &ex_);
 			UpdateCoverage(ex_);
 
@@ -825,7 +831,7 @@ DFS(i+1, cur_ex);
 	}
 
 
-	bool RandomSearch::SolveRandomBranch(vector<value_t>* next_input, size_t* idx) {
+	bool RandomSearch::SolveRandomBranch(vector<value_double_t>* next_input, size_t* idx) {
 
 		vector<size_t> idxs(ex_.path().constraints().size());
 		for (size_t i = 0; i < idxs.size(); i++)
@@ -902,7 +908,7 @@ return;
 				prev_ex.path().constraints().size(), depth);
 
 		SymbolicExecution cur_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 
 		int cnt = 0;
 
@@ -992,7 +998,7 @@ return;
 
 	void UniformRandomSearch::Run() {
 		// Initial execution (on empty/random inputs).
-		RunProgram(vector<value_t>(), &prev_ex_);
+		RunProgram(vector<value_double_t>(), &prev_ex_);
 		UpdateCoverage(prev_ex_);
 
 		while (true) {
@@ -1004,7 +1010,7 @@ return;
 	}
 
 	void UniformRandomSearch::DoUniformRandomPath() {
-		vector<value_t> input;
+		vector<value_double_t> input;
 
 		size_t i = 0;
 		size_t depth = 0;
@@ -1051,7 +1057,7 @@ return;
 
 		while (true) {
 			// Execution on empty/random inputs.
-			RunProgram(vector<value_t>(), &ex);
+			RunProgram(vector<value_double_t>(), &ex);
 			UpdateCoverage(ex);
 
 			// Local searches at increasingly deeper execution points.
@@ -1078,7 +1084,7 @@ return;
 		assert(start < end);
 
 		SymbolicExecution next_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 
 		fprintf(stderr, "%zu-%zu\n", start, end);
 		vector<size_t> idxs(end - start);
@@ -1131,7 +1137,7 @@ return;
 			
 			// Execution on empty/random inputs.
 			fprintf(stderr, "RESET\n");
-			RunProgram(vector<value_t>(), &ex);
+			RunProgram(vector<value_double_t>(), &ex);
 			UpdateCoverage(ex);
 
 			while (DoSearch(5, 250, 0, ex)) {
@@ -1174,7 +1180,7 @@ return;
 
 		// Solve.
 		SymbolicExecution cur_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 		for (size_t i = 0; i < scoredBranches.size(); i++) {
 			if (iters <= 0) {
 				return false;
@@ -1246,7 +1252,7 @@ return;
 
 			// Execution on empty/random inputs.
 			fprintf(stderr, "RESET\n");
-			RunProgram(vector<value_t>(), &ex);
+			RunProgram(vector<value_double_t>(), &ex);
 			if (UpdateCoverage(ex)) {
 				UpdateBranchDistances();
 				PrintStats();
@@ -1312,7 +1318,7 @@ return;
 
 		// Solve.
 		SymbolicExecution cur_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 		for (size_t i = 0; i < scoredBranches.size(); i++) {
 			if ((iters <= 0) || (scoredBranches[i].second > maxDist))
 				return false;
@@ -1540,7 +1546,7 @@ return;
 
 		fprintf(stderr, "SolveAlongCfg(%zu,%u)\n", i, max_dist);
 		SymbolicExecution cur_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 		const vector<branch_id_t>& path = prev_ex.path().branches();
 
 		// Compute the indices of all branches on the path that immediately
@@ -1694,7 +1700,7 @@ return;
 				i, prev_ex.path().branches()[prev_ex.path().constraints_idx()[i]]);
 
 		SymbolicExecution cur_ex;
-		vector<value_t> input;
+		vector<value_double_t> input;
 		const vector<SymbolicPred*>& constraints = prev_ex.path().constraints();
 		for (size_t j = static_cast<size_t>(i); j < constraints.size(); j++) {
 			if (!SolveAtBranch(prev_ex, j, &input)) {

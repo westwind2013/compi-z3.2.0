@@ -242,7 +242,13 @@ let shouldSkipFunction f = hasAttribute "crest_skip" f.vattr
 let prependToBlock (is : instr list) (b : block) =
   b.bstmts <- mkStmt (Instr is) :: b.bstmts
 
+(*
+ * hEdit: support floating point data types
+*)
+(*
 let isSymbolicType ty = isIntegralType (unrollType ty)
+*)
+let isSymbolicType ty = isArithmeticType (unrollType ty)
 
 
 (* These definitions must match those in "libcrest/crest.h". *)
@@ -254,7 +260,8 @@ let valType  = TInt (ILongLong, [])
 let addrType = TInt (IULong, [])
 let boolType = TInt (IUChar, [])
 let opType   = intType  (* enum *)
-
+(* Add following data types for floating point support*)
+let valTypeFDouble = TFloat (FDouble, [])
 
 (*
  * normalizeConditionalsVisitor ensures that every if block has an
@@ -362,6 +369,7 @@ class crestInstrumentVisitor f =
 	let bidArg  = ("bid",  bidType,  []) in
 	let fidArg  = ("fid",  fidType,  []) in
 	let valArg  = ("val",  valType,  []) in
+	let valArgFDouble  = ("valFDouble",  valTypeFDouble,  []) in
 	let addrArg = ("addr", addrType, []) in
 	let opArg   = ("op",   opType,   []) in
 	let boolArg = ("b",    boolType, []) in
@@ -385,14 +393,17 @@ class crestInstrumentVisitor f =
 	
 	(* hComment: create specific functions for all types of instructions *)
 	let loadFunc         = mkInstFunc "Load"  [addrArg; valArg] in
+	let loadFuncFD         = mkInstFunc "LoadFD"  [addrArg; valArgFDouble] in
 	let storeFunc        = mkInstFunc "Store" [addrArg] in
 	let clearStackFunc   = mkInstFunc "ClearStack" [] in
 	let apply1Func       = mkInstFunc "Apply1" [opArg; valArg] in
 	let apply2Func       = mkInstFunc "Apply2" [opArg; valArg] in
+	let apply2FuncFD       = mkInstFunc "Apply2FD" [opArg; valArgFDouble] in
 	let branchFunc       = mkInstFunc "Branch" [bidArg; boolArg] in
 	let callFunc         = mkInstFunc "Call" [fidArg] in
 	let returnFunc       = mkInstFunc "Return" [] in
 	let handleReturnFunc = mkInstFunc "HandleReturn" [valArg] in
+	let handleReturnFuncFD = mkInstFunc "HandleReturnFD" [valArgFDouble] in
 
 	(* hEdit: add a new function that marks MPI_rank in MPI_COMM_WORLD *)
 	let rankFunc   = mkInstFunc_ "Rank" [addrArg] in
@@ -421,7 +432,7 @@ class crestInstrumentVisitor f =
 			match op with
 			| Neg -> 19  | BNot -> 20  |  LNot -> 21
 			in
-			integer c
+        integer c
 	in
 
 	let binaryOpCode op =
@@ -448,20 +459,45 @@ class crestInstrumentVisitor f =
 		CastE (valType, e)
 	in
 
+	let toValueFDouble e =
+		if isPointerType (typeOf e) then
+		CastE (valTypeFDouble, CastE (addrType, e))
+		else
+		CastE (valTypeFDouble, e)
+	in
+
+    (*
+     * hEdit: checks if the data type of at least one expression is 
+     * floating point or not
+    *)
+    let isRetValFloat e1 e2 = 
+        match typeOf e1 with 
+            | TFloat(_) -> true
+            | _ -> 
+                (
+                match typeOf e2 with
+                    | TFloat(_) -> true
+                    | _ -> false
+                )
+    in
+
 	let mkLoad addr value    = mkInstCall loadFunc [toAddr addr; toValue value] in
+	let mkLoadFD addr value  = mkInstCall loadFuncFD [toAddr addr; toValueFDouble value] in
 	let mkStore addr         = mkInstCall storeFunc [toAddr addr] in
 	let mkClearStack ()      = mkInstCall clearStackFunc [] in
 	let mkApply1 op value    = mkInstCall apply1Func [unaryOpCode op; toValue value] in
 	let mkApply2 op value    = mkInstCall apply2Func [binaryOpCode op; toValue value] in
+	let mkApply2FD op value  = mkInstCall apply2FuncFD [binaryOpCode op; toValueFDouble value] in
 	let mkBranch bid b       = mkInstCall branchFunc [integer bid; integer b] in
 	let mkCall fid           = mkInstCall callFunc [integer fid] in
 	let mkReturn ()          = mkInstCall returnFunc [] in
 	let mkHandleReturn value = mkInstCall handleReturnFunc [toValue value] in
+	let mkHandleReturnFD value = mkInstCall handleReturnFuncFD [toValueFDouble value] in
 
 	let mkRank addr     = mkInstCall_ rankFunc [toAddr addr] in
 	let mkRankNonDefaultComm1 addr     = mkInstCall_ rankFuncNonDefaultComm1 [toAddr addr] in
 	let mkRankNonDefaultComm2 value addr     = mkInstCall_ rankFuncNonDefaultComm2 [toValue value; toAddr addr] in
-	let mkWorldSize addr limit    = mkInstCall_ worldSizeFunc [toAddr addr; integer limit] in
+    let mkWorldSize addr limit    = mkInstCall_ worldSizeFunc [toAddr addr; integer limit] in
 	let mkGetMPIInfo ()      = mkInstCall_ getMPIInfo [] in
 
 
@@ -536,20 +572,47 @@ class crestInstrumentVisitor f =
 	*)
 	let rec instrumentExpr e =
 		if isConstant e then
-			[mkLoad noAddr e]
+			match e with 
+            | Const(CReal(_)) -> 
+                [mkLoadFD noAddr e]
+            | _ ->
+                [mkLoad noAddr e]
 		else
 		match e with
 			| Lval lv when hasAddress lv ->
-			    [mkLoad (addressOf lv) e]
-
+			    (
+                    match lv with 
+                        | (Var v, _) -> 
+                            ( match v.vtype with
+                                | TFloat(_, _) ->
+                                    [mkLoadFD (addressOf lv) e]
+                                | _ -> 
+                                    [mkLoad (addressOf lv) e]
+                            )
+                        | _ -> 
+                            [mkLoad (addressOf lv) e]
+                )
 			| UnOp (op, e1, _) ->
 			    (* Should skip this if we don't currently handle 'op'. *)
                 (* hComment: symbol '@' is used to concatenate two lists*)
-			    (instrumentExpr e1) @ [mkApply1 op e]
+                (instrumentExpr e1) @ [mkApply1 op e]
 
 			| BinOp (op, e1, e2, _) ->
 			    (* Should skip this if we don't currently handle 'op'. *)
-			    (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2 op e]
+			    if isRetValFloat e1 e2 then
+                    match op with 
+                    | PlusA ->
+                        (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2FD op e]
+                    | MinusA ->
+                        (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2FD op e]
+                    | Mult ->
+                        (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2FD op e]
+                    | Div ->
+                        (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2FD op e]
+                    | _ ->
+                        (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2 op e]
+                else
+                    (instrumentExpr e1) @ (instrumentExpr e2) @ [mkApply2 op e]
 
 			| CastE (_, e) ->
 			    (* We currently treat cast's as no-ops, which is not precise. *)
@@ -568,7 +631,7 @@ class crestInstrumentVisitor f =
 	(*
 	* Instrument a statement (branch or function return).
 	*)
-	method vstmt(s) =
+    method vstmt(s) =
 		match s.skind with
 			| If (e, b1, b2, _) ->
 				(* hComment: get the first statement's id of a code block *)
@@ -632,33 +695,48 @@ class crestInstrumentVisitor f =
 									let inst_list = (worldSizeMarker args) @ [i] @ [mkClearStack ()] in
 									ChangeTo inst_list;
 								| _  -> 
-									ChangeTo [i ;
-									 mkHandleReturn (Lval lv) ;
-									mkStore (addressOf lv)]
+                                    (
+                                    match lv with 
+                                        | (Var v, _) -> 
+                                            ( match v.vtype with
+                                                | TFloat(_, _) ->
+                                                    ChangeTo [i ;
+                                                    mkHandleReturnFD (Lval lv) ;
+                                                    mkStore (addressOf lv)]
+                                                | _ -> 
+                                                    ChangeTo [i ;
+                                                    mkHandleReturn (Lval lv) ;
+                                                    mkStore (addressOf lv)]
+                                            )
+                                        | _ -> 
+                                            ChangeTo [i ;
+                                            mkHandleReturn (Lval lv) ;
+                                            mkStore (addressOf lv)]
+                                    )
 							)
 						| _ ->
 							ChangeTo [i ;
-							 mkHandleReturn (Lval lv) ;
+							mkHandleReturn (Lval lv) ;
 							mkStore (addressOf lv)]
 					)
 				| _ ->
-				( match exp with 
-					| Lval (Var f, NoOffset) -> (				
-						match f.vname with 
-							| "MPI_Init" ->
-								ChangeTo [i; mkGetMPIInfo ()];
-							| "MPI_Comm_rank"  ->
-								let inst_list = (rankMarker args i) @ [mkClearStack ()] in
-								ChangeTo inst_list;
-							| "MPI_Comm_size"  -> 
-								let inst_list = (worldSizeMarker args) @ [i] @ [mkClearStack ()] in
-								ChangeTo inst_list;
-							| _  -> ChangeTo [i; mkClearStack()];
-							
-						)
-					| _ ->
-						ChangeTo [i ; mkClearStack ()]
-				)
+                    ( match exp with 
+                        | Lval (Var f, NoOffset) -> (				
+                            match f.vname with 
+                                | "MPI_Init" ->
+                                    ChangeTo [i; mkGetMPIInfo ()];
+                                | "MPI_Comm_rank"  ->
+                                    let inst_list = (rankMarker args i) @ [mkClearStack ()] in
+                                    ChangeTo inst_list;
+                                | "MPI_Comm_size"  -> 
+                                    let inst_list = (worldSizeMarker args) @ [i] @ [mkClearStack ()] in
+                                    ChangeTo inst_list;
+                                | _  -> ChangeTo [i; mkClearStack()];
+                                
+                            )
+                        | _ ->
+                            ChangeTo [i ; mkClearStack ()]
+                    )
 			)
 
 		| _ -> DoChildren

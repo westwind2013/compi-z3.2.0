@@ -11,18 +11,27 @@
 #ifndef BASE_BASIC_TYPES_H__
 #define BASE_BASIC_TYPES_H__
 
+#include <limits>
+
+#define EPSILON std::numeric_limits<double>::epsilon()
+
 #include <cstddef>
 
 namespace crest {
-
-	typedef int id_t;
+	
+    typedef int id_t;
 	typedef int branch_id_t;
 	typedef unsigned int function_id_t;
 	typedef unsigned int var_t;
 	typedef long long int value_t;
 	typedef unsigned long int addr_t;
 
-	// Virtual "branch ID's" used to represent function calls and returns.
+    //
+    // hEdit: Supporting the floating point data type
+    // 
+	typedef double value_double_t;
+
+    // Virtual "branch ID's" used to represent function calls and returns.
 
 	static const branch_id_t kCallId = -1;
 	static const branch_id_t kReturnId = -2;

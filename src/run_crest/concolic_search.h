@@ -74,12 +74,12 @@ namespace crest {
 			typedef vector<branch_id_t>::const_iterator BranchIt;
 
 			bool SolveAtBranch(const SymbolicExecution& ex, size_t branch_idx,
-					vector<value_t>* input);
+					vector<value_double_t>* input);
 
 			bool CheckPrediction(const SymbolicExecution& old_ex,
 					const SymbolicExecution& new_ex, size_t branch_idx);
 
-			void RunProgram(const vector<value_t>& inputs, SymbolicExecution* ex);
+			void RunProgram(const vector<value_double_t>& inputs, SymbolicExecution* ex);
 			bool UpdateCoverage(SymbolicExecution& ex);
 			bool UpdateCoverage(SymbolicExecution& ex,
 					set<branch_id_t>* new_branches);
@@ -123,11 +123,11 @@ namespace crest {
 			 */
 
 			void WriteInputToFileOrDie_debug(const string& file,
-					const vector<value_t>& input);
+					const vector<value_double_t>& input);
 			void WriteInputToFileOrDie(const string& file,
-					const vector<value_t>& input);
+					const vector<value_double_t>& input);
 			void WriteCoverageToFileOrDie(const string& file);
-			void LaunchProgram(const vector<value_t>& inputs);
+			void LaunchProgram(const vector<value_double_t>& inputs);
 	};
 
 	class BoundedDepthFirstSearch: public Search {
@@ -172,7 +172,7 @@ namespace crest {
 			size_t world_size_max;
 			size_t world_size_index;
 
-			void RandomInput(const map<var_t, type_t>& vars, vector<value_t>* input);
+			void RandomInput(const map<var_t, type_t>& vars, vector<value_double_t>* input);
 	};
 
 	class RandomSearch: public Search {
@@ -189,7 +189,7 @@ namespace crest {
 			void SolveUncoveredBranches(size_t i, int depth,
 					const SymbolicExecution& prev_ex);
 
-			bool SolveRandomBranch(vector<value_t>* next_input, size_t* idx);
+			bool SolveRandomBranch(vector<value_double_t>* next_input, size_t* idx);
 	};
 
 	class UniformRandomSearch: public Search {

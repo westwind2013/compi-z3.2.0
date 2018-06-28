@@ -38,21 +38,30 @@ namespace crest {
 
 			void ClearStack(id_t id);
 			void Load(id_t id, addr_t addr, value_t value);
+			void Load(id_t id, addr_t addr, value_double_t value);
 			void Store(id_t id, addr_t addr);
 
 			void ApplyUnaryOp(id_t id, unary_op_t op, value_t value);
 			void ApplyBinaryOp(id_t id, binary_op_t op, value_t value);
+			void ApplyBinaryOp(id_t id, binary_op_t op, value_double_t value);
 			void ApplyCompareOp(id_t id, compare_op_t op, value_t value);
 
 			void Call(id_t id, function_id_t fid);
 			void Return(id_t id);
 			void HandleReturn(id_t id, value_t value);
+			void HandleReturn(id_t id, value_double_t value);
 
 			void Branch(id_t id, branch_id_t bid, bool pred_value);
 			void BranchOnly(branch_id_t bid);
 
-			value_t NewInput(type_t type, addr_t addr, value_t limit = INT_MAX);
-			value_t NewInputWithLimit(type_t type, addr_t addr, value_t limit);
+			value_t NewInput(type_t type, addr_t addr, value_double_t limit = INT_MAX);
+			value_t NewInputWithLimit(type_t type, addr_t addr, value_double_t limit);
+
+            // 
+            // hEdit: Supporting the floating point data type
+            // 
+			value_double_t NewInputFD(type_t type, addr_t addr, value_double_t limit = INT_MAX);
+			value_double_t NewInputWithLimitFD(type_t type, addr_t addr, value_double_t limit);
 
 			// 
 			// hEdit: this method takes special care of input variables  
@@ -66,7 +75,7 @@ namespace crest {
 			// that indicate the size of MPI_COMM_WORLD
 			//
 			value_t NewInputWorldSize(type_t type, addr_t addr);
-			value_t NewInputWorldSizeWithLimit(type_t type, addr_t addr, value_t limit);
+			value_t NewInputWorldSizeWithLimit(type_t type, addr_t addr, value_double_t limit);
 			
 			// Accessor for symbolic execution so far.
 			const SymbolicExecution& execution() const { return ex_; }
@@ -97,8 +106,10 @@ namespace crest {
 
 		private:
 			struct StackElem {
-				SymbolicExpr* expr;  // NULL to indicate concrete.
+				bool isFloat;
+                SymbolicExpr* expr;  // NULL to indicate concrete.
 				value_t concrete;
+				value_double_t concreteFD;
 			};
 
 			// Stack.
@@ -126,6 +137,11 @@ namespace crest {
 			inline void PushSymbolic(SymbolicExpr* expr, value_t value);
 			inline void ClearPredicateRegister();
 
+            // 
+            // hEdit: support floating point data type
+            // 
+			inline void PushConcrete(value_double_t value);
+			inline void PushSymbolic(SymbolicExpr* expr, value_double_t value);
 	};
 
 }  // namespace crest

@@ -16,6 +16,9 @@
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
+
+#include <cmath>
+
 #include "mpi.h"
 
 #include "base/symbolic_interpreter.h"
@@ -150,7 +153,21 @@ namespace crest {
 		IFDEBUG(DumpMemory());
 	}
 
-	void SymbolicInterpreter::Store(id_t id, addr_t addr) {
+	void SymbolicInterpreter::Load(id_t id, addr_t addr, value_double_t value) {
+		IFDEBUG(fprintf(stderr, "load %lu %lf\n", addr, value));
+		
+        ConstMemIt it = mem_.find(addr);
+		if (it == mem_.end()) {
+			PushConcrete(value);
+		} else {
+			PushSymbolic(new SymbolicExpr(*it->second), value);
+		}
+
+		ClearPredicateRegister();
+		IFDEBUG(DumpMemory());
+	}
+	
+    void SymbolicInterpreter::Store(id_t id, addr_t addr) {
 		IFDEBUG(fprintf(stderr, "store %lu\n", addr));
 		
         assert(stack_.size() > 0);
@@ -214,6 +231,7 @@ namespace crest {
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
+        
 
 		if (a.expr || b.expr) {
 			switch (op) {
@@ -245,7 +263,7 @@ namespace crest {
 				case ops::SHIFT_L:
 					if (a.expr != NULL) {
 						// Convert to multiplication by a (concrete) constant.
-						*a.expr *= (1 << b.concrete);
+						*a.expr *= (1LL << b.concrete);
 					}
 					delete b.expr;
 					break;
@@ -271,7 +289,77 @@ namespace crest {
 			}
 		}
 
-		a.concrete = value;
+        // 
+        // hEdit: not a float
+        //
+        a.isFloat = false;
+		
+        a.concrete = value;
+		stack_.pop_back();
+		ClearPredicateRegister();
+		IFDEBUG(DumpMemory());
+	}
+
+
+	void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op,
+			value_double_t value) {
+		IFDEBUG(fprintf(stderr, "apply2 %d %lld\n", op, value));
+		
+        assert(stack_.size() >= 2);
+		StackElem& a = *(stack_.rbegin() + 1);
+		StackElem& b = stack_.back();
+
+		if (a.expr || b.expr) {
+			switch (op) {
+				case ops::ADD:
+					if (a.expr == NULL) {
+						swap(a, b);
+						*a.expr += b.concrete;
+					} else if (b.expr == NULL) {
+						*a.expr += b.concrete;
+					} else {
+						*a.expr += *b.expr;
+						delete b.expr;
+					}
+					break;
+
+				case ops::SUBTRACT:
+					if (a.expr == NULL) {
+						b.expr->Negate();
+						swap(a, b);
+						*a.expr += b.concrete;
+					} else if (b.expr == NULL) {
+						*a.expr -= b.concrete;
+					} else {
+						*a.expr -= *b.expr;
+						delete b.expr;
+					}
+					break;
+
+
+				case ops::MULTIPLY:
+					if (a.expr == NULL) {
+						swap(a, b);
+						*a.expr *= b.concrete;
+					} else if (b.expr == NULL) {
+						*a.expr *= b.concrete;
+					} else {
+						swap(a, b);
+						*a.expr *= b.concrete;
+						delete b.expr;
+					}
+					break;
+
+				default:
+					// Concrete operator.
+					delete a.expr;
+					delete b.expr;
+					a.expr = NULL;
+			}
+		}
+
+        a.isFloat = true;
+		a.concreteFD = value;
 		stack_.pop_back();
 		ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
@@ -309,6 +397,7 @@ namespace crest {
 			a.expr = NULL;
 		}
 
+        a.isFloat = false;
 		a.concrete = value;
 		stack_.pop_back();
 		IFDEBUG(DumpMemory());
@@ -338,10 +427,32 @@ namespace crest {
 	void SymbolicInterpreter::HandleReturn(id_t id, value_t value) {
 		IFDEBUG(fprintf(stderr, "handle_return %lld\n", value));
 
+        
 		if (return_value_) {
 			// We just returned from an instrumented function, so the stack
 			// contains a single element -- the (possibly symbolic) return value.
 			assert(stack_.size() == 1);
+            stack_.back().isFloat = false;
+			return_value_ = false;
+		} else {
+			// We just returned from an uninstrumented function, so the stack
+			// still contains the arguments to that function.  Thus, we clear
+			// the stack and push the concrete value that was returned.
+			ClearStack(-1);
+			PushConcrete(value);
+		}
+
+		IFDEBUG(DumpMemory());
+	}
+
+	void SymbolicInterpreter::HandleReturn(id_t id, value_double_t value) {
+		IFDEBUG(fprintf(stderr, "handle_return %lld\n", value));
+
+		if (return_value_) {
+			// We just returned from an instrumented function, so the stack
+			// contains a single element -- the (possibly symbolic) return value.
+			assert(stack_.size() == 1);
+            stack_.back().isFloat = true;
 			return_value_ = false;
 		} else {
 			// We just returned from an uninstrumented function, so the stack
@@ -363,7 +474,7 @@ namespace crest {
 //	fprintf(stderr, "branch: %d %d; stack'size: %d\n", 
 //		bid, pred_value, stack_.size());
 //}
-stack_.clear();
+        stack_.clear();
 		
 		//assert(stack_.size() == 1);
 		//stack_.pop_back();
@@ -386,15 +497,16 @@ stack_.clear();
 		ex_.mutable_path()->Push(bid);
 	}
 
-    value_t SymbolicInterpreter::NewInput(type_t type, addr_t addr, value_t limit) {
+    
+    value_t SymbolicInterpreter::NewInput(type_t type, addr_t addr, value_double_t limit) {
         IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-        mem_[addr] = new SymbolicExpr(1, num_inputs_);
+        mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
         ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
         value_t ret = 0;
         if (num_inputs_ < ex_.inputs().size()) {
-            ret = ex_.inputs()[num_inputs_];
+            ret = CastTo(static_cast<value_t>(ex_.inputs()[num_inputs_]), type);
         } else {
             //
             // hEdit: get random paramters obtained from the tool
@@ -406,7 +518,7 @@ stack_.clear();
             //{
             // When new marked variables is found, we need to
             // generate new values for them. 
-            ret = CastTo(rand() % limit, type);	
+            ret = CastTo(rand() % (int)limit, type);	
             // 
             // hEdit: synchronize the value among all processes
             //
@@ -422,10 +534,53 @@ stack_.clear();
         return ret;
     }
 
-	value_t SymbolicInterpreter::NewInputWithLimit(type_t type, addr_t addr, value_t limit) {
+	value_t SymbolicInterpreter::NewInputWithLimit(type_t type, addr_t addr, value_double_t limit) {
 	
 		ex_.limits_[num_inputs_] = limit;
 		return NewInput(type, addr, limit);
+	}
+
+
+    value_double_t SymbolicInterpreter::NewInputFD(type_t type, addr_t addr, value_double_t limit) {
+        IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
+
+        mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
+        ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
+
+        value_double_t ret = 0;
+        if (num_inputs_ < ex_.inputs().size()) {
+            ret = static_cast<double>(ex_.inputs()[num_inputs_]);
+        } else {
+            //
+            // hEdit: get random paramters obtained from the tool
+            //
+
+            //if (rand_params_.size() > num_inputs_)
+            //	ret = CastTo(rand_params_[num_inputs_], type);
+            //else
+            //{
+            // When new marked variables is found, we need to
+            // generate new values for them. 
+            ret = static_cast<double>(rand() % (int)limit);	
+            // 
+            // hEdit: synchronize the value among all processes
+            //
+            MPI_Bcast(&ret, 1, MPI_LONG_LONG_INT, 0, MPI_COMM_WORLD);
+
+            //}
+            ex_.mutable_inputs()->push_back(ret);
+        }
+
+        num_inputs_++;
+
+        IFDEBUG(DumpMemory());
+        return ret;
+    }
+
+	value_double_t SymbolicInterpreter::NewInputWithLimitFD(type_t type, addr_t addr, value_double_t limit) {
+	
+		ex_.limits_[num_inputs_] = limit;
+		return NewInputFD(type, addr, limit);
 	}
 	
 	
@@ -436,7 +591,7 @@ stack_.clear();
 	value_t SymbolicInterpreter::NewInputRank(type_t type, addr_t addr) {
 		IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-		mem_[addr] = new SymbolicExpr(1, num_inputs_);
+		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
 		value_t ret = 0;
@@ -487,12 +642,12 @@ stack_.clear();
 	value_t SymbolicInterpreter::NewInputRankNonDefaultComm(type_t type, addr_t addr) {
 		IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-		mem_[addr] = new SymbolicExpr(1, num_inputs_);
+		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
 		value_t ret = 0;
 		if (num_inputs_ < ex_.inputs().size()) {
-			ret = ex_.inputs()[num_inputs_];
+			ret = CastTo(ex_.inputs()[num_inputs_], type);
 		} else {
 			//
 			// hEdit: the value will be overwritten by the call of MPI_Comm_rank
@@ -537,12 +692,12 @@ stack_.clear();
 	value_t SymbolicInterpreter::NewInputWorldSize(type_t type, addr_t addr) {
 		IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-		mem_[addr] = new SymbolicExpr(1, num_inputs_);
+		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
 		value_t ret = 0;
 		if (num_inputs_ < ex_.inputs().size()) {
-			ret = ex_.inputs()[num_inputs_];
+			ret = CastTo(ex_.inputs()[num_inputs_], type);
 		} else {
 			//
 			// hEdit:  we first make the size of MPI_COMM_WORLD 4
@@ -579,7 +734,7 @@ stack_.clear();
 		return ret;
 	}
 
-	value_t SymbolicInterpreter::NewInputWorldSizeWithLimit(type_t type, addr_t addr, value_t limit) {
+	value_t SymbolicInterpreter::NewInputWorldSizeWithLimit(type_t type, addr_t addr, value_double_t limit) {
 		
 		ex_.limits_[num_inputs_] = limit;
 		return NewInputWorldSize(type, addr);
@@ -589,11 +744,26 @@ stack_.clear();
 		PushSymbolic(NULL, value);
 	}
 
-	void SymbolicInterpreter::PushSymbolic(SymbolicExpr* expr, value_t value) {
+	void SymbolicInterpreter::PushConcrete(value_double_t value) {
+		PushSymbolic(NULL, value);
+	}
+    
+    void SymbolicInterpreter::PushSymbolic(SymbolicExpr* expr, value_t value) {
 		stack_.push_back(StackElem());
 		StackElem& se = stack_.back();
+
+        se.isFloat = false;
 		se.expr = expr;
 		se.concrete = value;
+	}
+
+    void SymbolicInterpreter::PushSymbolic(SymbolicExpr* expr, value_double_t value) {
+		stack_.push_back(StackElem());
+		StackElem& se = stack_.back();
+		
+        se.isFloat = true;
+        se.expr = expr;
+		se.concreteFD = value;
 	}
 
 	void SymbolicInterpreter::ClearPredicateRegister() {

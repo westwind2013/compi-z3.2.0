@@ -56,11 +56,6 @@ namespace crest {
 			case types::LONG_LONG:
 				// Cast would do nothing in these cases.
 				return val;
-		
-			case types::FLOAT:
-				return static_cast<float>(val);
-			case types::DOUBLE:
-				return static_cast<double>(val);
         }
 
 		// Cannot reach here.

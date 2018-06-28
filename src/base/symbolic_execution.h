@@ -34,7 +34,7 @@ namespace crest {
 			//
 			// hEdit: logging information used specifically by MPI
 			//
-			unordered_map<id_t, value_t> limits_;
+			unordered_map<id_t, value_double_t> limits_;
 			vector<id_t> rank_indices_;
 			vector<id_t> rank_non_default_comm_indices_;
 			vector<vector<id_t>> rank_non_default_comm_map_;
@@ -53,16 +53,16 @@ namespace crest {
 			bool ParseBranches(istream& s);
 
 			const map<var_t,type_t>& vars() const { return vars_; }
-			const vector<value_t>& inputs() const { return inputs_; }
+			const vector<value_double_t>& inputs() const { return inputs_; }
 			const SymbolicPath& path() const      { return path_; }
 
 			map<var_t,type_t>* mutable_vars() { return &vars_; }
-			vector<value_t>* mutable_inputs() { return &inputs_; }
+			vector<value_double_t>* mutable_inputs() { return &inputs_; }
 			SymbolicPath* mutable_path() { return &path_; }
 
 		private:
 			map<var_t,type_t>  vars_;
-			vector<value_t> inputs_;
+			vector<value_double_t> inputs_;
 			SymbolicPath path_;  
 	};
 

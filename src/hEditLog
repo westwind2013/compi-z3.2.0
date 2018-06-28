@@ -1,0 +1,19 @@
+Pending Issue:
+
+    1. 
+    Issue: Not sure if it is OK to use data type *MPI_LONG_LONG_INT* to broadcast the value randomly generated values regardless
+    the data type of these values.
+    Location: NewInput(...) in ./base/symbolic_interpreter.cc
+
+    2. 
+    Issue: Not sure the initial value of double-precision floating point variable for "map" in C++
+    Locate: around 118 in ./base/*expression.cc
+
+    3. 
+    Issue: not sure about the Z3_model_eval function
+
+
+Remaining work:
+
+    1. instructions related to limits_ are not yet done 
+    Location: ./base/z3_solver.cc

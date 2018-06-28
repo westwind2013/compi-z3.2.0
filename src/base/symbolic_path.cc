@@ -41,71 +41,71 @@ namespace crest {
 		branchesSet_.insert(bid);
 	}
 
-	void SymbolicPath::Push(branch_id_t bid, SymbolicPred* constraint, 
-		branch_state_t state) {
-		
-		if (constraint) {
-//fprintf(stderr, "bid: %d, state: %d, branches' size: %d\n", bid, state, branches_.size());
-				
-                        if (branchesHash.find(bid) == branchesHash.end() || 
-				branchesHash[bid] != state) {
+    void SymbolicPath::Push(branch_id_t bid, SymbolicPred* constraint, 
+            branch_state_t state) {
 
-                                branchesHash[bid] = state;
-                                constraints_.push_back(constraint);
-                                constraints_idx_.push_back(branches_.size());
-                        }
-                }
+        if (constraint) {
+            //fprintf(stderr, "bid: %d, state: %d, branches' size: %d\n", bid, state, branches_.size());
 
-		branches_.push_back(bid);
-// 
-// hEdit: debug
-// 
-//string tmp;
-//constraint->AppendToString(&tmp);
-//fprintf(stderr, "%s @ branch %d \n\n", tmp.c_str(), bid);
-	}
+            if (branchesHash.find(bid) == branchesHash.end() || 
+                    branchesHash[bid] != state) {
 
-	void SymbolicPath::Serialize(string* s) const {
-		typedef vector<SymbolicPred*>::const_iterator ConIt;
+                branchesHash[bid] = state;
+                constraints_.push_back(constraint);
+                constraints_idx_.push_back(branches_.size());
+            }
+        }
 
-//fprintf(stderr, "branches' size: %zu\n"
-//		"constraints' size: %zu\n", 
-//		branches_.size(), constraints_.size());
+        branches_.push_back(bid);
+        // 
+        // hEdit: debug
+        // 
+        //string tmp;
+        //constraint->AppendToString(&tmp);
+        //fprintf(stderr, "%s @ branch %d \n\n", tmp.c_str(), bid);
+    }
 
-//hEdit: print the constraints
-//for (auto c: constraints_) {
-//	string str;
-//	c->AppendToString(&str);
-//	fprintf(stderr, "%s\n", str.c_str());	
-//}
-//fprintf(stderr, "\n\n\n");
-//fflush(stderr);
-		
-		// Write the path.
-		size_t len = branches_.size();
-		
-		//
-		// hEdit:: debug
-		//
-		//printf("branches_.size(): %d\n", len);
-		
-		s->append((char*)&len, sizeof(len));
-		s->append((char*)&branches_.front(), branches_.size() * sizeof(branch_id_t));
+    void SymbolicPath::Serialize(string* s) const {
+        typedef vector<SymbolicPred*>::const_iterator ConIt;
 
-		// Write the path constraints.
-		len = constraints_.size();
+        //fprintf(stderr, "branches' size: %zu\n"
+        //		"constraints' size: %zu\n", 
+        //		branches_.size(), constraints_.size());
 
-		//
-		// hEdit:: debug
-		//
-		//printf("constraints_.size(): %d\n", len);
+        //hEdit: print the constraints
+        //for (auto c: constraints_) {
+        //	string str;
+        //	c->AppendToString(&str);
+        //	fprintf(stderr, "%s\n", str.c_str());	
+        //}
+        //fprintf(stderr, "\n\n\n");
+        //fflush(stderr);
 
-		s->append((char*)&len, sizeof(len));
-		s->append((char*)&constraints_idx_.front(), constraints_.size() * sizeof(size_t));
-		for (ConIt i = constraints_.begin(); i != constraints_.end(); ++i) {
-			(*i)->Serialize(s);
-		}
-	}
+        // Write the path.
+        size_t len = branches_.size();
+
+        //
+        // hEdit:: debug
+        //
+        //printf("branches_.size(): %d\n", len);
+
+        s->append((char*)&len, sizeof(len));
+        s->append((char*)&branches_.front(), branches_.size() * sizeof(branch_id_t));
+
+        // Write the path constraints.
+        len = constraints_.size();
+
+        //
+        // hEdit:: debug
+        //
+        //printf("constraints_.size(): %d\n", len);
+
+        s->append((char*)&len, sizeof(len));
+        s->append((char*)&constraints_idx_.front(), constraints_.size() * sizeof(size_t));
+        for (ConIt i = constraints_.begin(); i != constraints_.end(); ++i) {
+            (*i)->Serialize(s);
+        }
+    }
 
 	void SymbolicPath::SerializeBranches(string* s) const {
 		//typedef vector<SymbolicPred*>::const_iterator ConIt;

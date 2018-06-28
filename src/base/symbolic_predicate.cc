@@ -13,7 +13,7 @@
 namespace crest {
 
 	SymbolicPred::SymbolicPred()
-		: op_(ops::EQ), expr_(new SymbolicExpr(0)) { }
+		: op_(ops::EQ), expr_(new SymbolicExpr(0LL)) { }
 
 	SymbolicPred::SymbolicPred(compare_op_t op, SymbolicExpr* expr)
 		: op_(op), expr_(expr) { }

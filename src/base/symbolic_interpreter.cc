@@ -303,11 +303,28 @@ namespace crest {
 
 	void SymbolicInterpreter::ApplyBinaryOp(id_t id, binary_op_t op,
 			value_double_t value) {
-		IFDEBUG(fprintf(stderr, "apply2 %d %lld\n", op, value));
-		
+		IFDEBUG(fprintf(stderr, "apply2 %d %lf\n", op, value));
+
+fprintf(stderr, "value = %lf\n", value);
+
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
+
+if (a.expr) {
+    string s;
+    a.expr->AppendToString(&s);
+    fprintf(stderr, "Expr: %s\n", s.c_str());
+} else {
+    fprintf(stderr, "Null expression!\n");
+}
+if (b.expr) {
+    string s;
+    b.expr->AppendToString(&s);
+    fprintf(stderr, "Expr: %s\n", s.c_str());
+} else {
+    fprintf(stderr, "Null expression!\n");
+}
 
 		if (a.expr || b.expr) {
 			switch (op) {
@@ -340,12 +357,15 @@ namespace crest {
 				case ops::MULTIPLY:
 					if (a.expr == NULL) {
 						swap(a, b);
-						*a.expr *= b.concrete;
+						if (b.isFloat) *a.expr *= b.concreteFD;
+                        else *a.expr *= b.concrete;
 					} else if (b.expr == NULL) {
-						*a.expr *= b.concrete;
+						if (b.isFloat) *a.expr *= b.concreteFD;
+                        else *a.expr *= b.concrete;
 					} else {
-						swap(a, b);
-						*a.expr *= b.concrete;
+						//swap(a, b);
+						if (b.isFloat) *a.expr *= b.concreteFD;
+                        else *a.expr *= b.concrete;
 						delete b.expr;
 					}
 					break;
@@ -354,13 +374,22 @@ namespace crest {
 					// Concrete operator.
 					delete a.expr;
 					delete b.expr;
-					a.expr = NULL;
+					//a.expr = NULL;
 			}
 		}
-
+        
         a.isFloat = true;
 		a.concreteFD = value;
-		stack_.pop_back();
+
+if (a.expr) {
+    string s;
+    a.expr->AppendToString(&s);
+    fprintf(stderr, "Expr: %s\n", s.c_str());
+} else {
+    fprintf(stderr, "Null expression!\n");
+}
+		
+        stack_.pop_back();
 		ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
@@ -372,8 +401,37 @@ namespace crest {
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
+        a.isFloat |= b.isFloat;
+        b.isFloat = a.isFloat;
 
-		if (a.expr || b.expr) {
+        if (a.isFloat) {
+            if (a.expr || b.expr) {
+                // Symbolically compute "a -= b".
+                if (a.expr == NULL) {
+                    b.expr->Negate();
+                    swap(a, b);
+                    *a.expr += b.concrete;
+                    *a.expr += b.concreteFD;
+                } else if (b.expr == NULL) {
+                    *a.expr -= b.concrete;
+                    *a.expr -= b.concreteFD;
+                } else {
+                    *a.expr -= *b.expr;
+                    delete b.expr;
+                }
+                // Construct a symbolic predicate (if "a - b" is symbolic), and
+                // store it in the predicate register.
+                if (!a.expr->IsConcrete()) {
+                    pred_ = new SymbolicPred(op, a.expr);
+                } else {
+                    ClearPredicateRegister();
+                    delete a.expr;
+                }
+                // We leave a concrete value on the stack.
+                a.expr = NULL;
+            }
+        }
+        else if (a.expr || b.expr) {
 			// Symbolically compute "a -= b".
 			if (a.expr == NULL) {
 				b.expr->Negate();
@@ -396,8 +454,7 @@ namespace crest {
 			// We leave a concrete value on the stack.
 			a.expr = NULL;
 		}
-
-        a.isFloat = false;
+        
 		a.concrete = value;
 		stack_.pop_back();
 		IFDEBUG(DumpMemory());
@@ -409,6 +466,7 @@ namespace crest {
         ex_.mutable_path()->Push(kCallId);
 		IFDEBUG(DumpMemory());
 	}
+
 
 	void SymbolicInterpreter::Return(id_t id) {
 		IFDEBUG(fprintf(stderr, "return\n"));
@@ -446,7 +504,7 @@ namespace crest {
 	}
 
 	void SymbolicInterpreter::HandleReturn(id_t id, value_double_t value) {
-		IFDEBUG(fprintf(stderr, "handle_return %lld\n", value));
+		IFDEBUG(fprintf(stderr, "handle_return %lf\n", value));
 
 		if (return_value_) {
 			// We just returned from an instrumented function, so the stack
@@ -507,6 +565,7 @@ namespace crest {
         value_t ret = 0;
         if (num_inputs_ < ex_.inputs().size()) {
             ret = CastTo(static_cast<value_t>(ex_.inputs()[num_inputs_]), type);
+//fprintf(stderr, "ret: %d, %ld\n", num_inputs_, ret);
         } else {
             //
             // hEdit: get random paramters obtained from the tool
@@ -755,6 +814,7 @@ namespace crest {
         se.isFloat = false;
 		se.expr = expr;
 		se.concrete = value;
+		se.concreteFD = 0.0;
 	}
 
     void SymbolicInterpreter::PushSymbolic(SymbolicExpr* expr, value_double_t value) {
@@ -764,6 +824,7 @@ namespace crest {
         se.isFloat = true;
         se.expr = expr;
 		se.concreteFD = value;
+		se.concrete = 0;
 	}
 
 	void SymbolicInterpreter::ClearPredicateRegister() {

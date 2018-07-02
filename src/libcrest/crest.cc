@@ -60,8 +60,10 @@ void __CrestInit() {
 
     // Read the input.
     vector<value_t> input;
+    //system("cat input");
+
     std::ifstream in("input");
-    value_t val;
+    value_double_t val;
     while (in >> val) {
         input.push_back(val);
     }

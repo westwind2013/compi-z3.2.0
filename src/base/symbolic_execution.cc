@@ -45,7 +45,8 @@ namespace crest {
 		for (VarIt i = vars_.begin(); i != vars_.end(); ++i) {
 			s->push_back(static_cast<char>(i->second));
 			s->append((char*)&inputs_[i->first], sizeof(value_double_t));
-		}
+//fprintf(stderr, "inputs_[%d] = %lf\n", i->first, inputs_[i->first]);
+        }
                 
         // Wirte the execution tag
         s->append((char*)&execution_tag_, sizeof(size_t));
@@ -56,6 +57,8 @@ namespace crest {
         for (auto i: limits_) {
             s->append((char*)&i.first, sizeof(id_t));          
             s->append((char*)&i.second, sizeof(value_double_t));          
+
+//fprintf(stderr, "limits_[%d] = %lf\n", i.first, i.second);
         } 
 
         // Wirte MPI info
@@ -136,6 +139,7 @@ fprintf(stderr, "Serialization info: inputs size: %zu\n "
         for (size_t i = 0; i < len; i++) {
             vars_[i] = static_cast<type_t>(s.get());
             s.read((char*)&inputs_[i], sizeof(value_double_t));
+//fprintf(stderr, "inputs_[%d] = %lf\n", i, inputs_[i]);
         }
 
         // Read the execution tag
@@ -145,11 +149,12 @@ fprintf(stderr, "Serialization info: inputs size: %zu\n "
         s.read((char*)&len, sizeof(len));
         limits_.clear();
         id_t first;
-        value_t second;
+        value_double_t second;
         for (size_t i = 0; i < len; i++) {
             s.read((char*)&first, sizeof(id_t));
             s.read((char*)&second, sizeof(value_double_t));
             limits_[first] = second;
+//fprintf(stderr, "limits_[%d] = %lf\n", first, second);
         }
 
         // Read MPI info

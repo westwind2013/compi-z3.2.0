@@ -200,7 +200,7 @@ namespace crest {
 		}
 		
 		for (size_t j = 0; j < input.size(); j++) {
-			fprintf(f, "%lf\n", input[j]);
+			fprintf(f, "%.15lf\n", input[j]);
 		}
 
 		fclose(f);

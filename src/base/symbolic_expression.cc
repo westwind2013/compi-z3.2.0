@@ -101,57 +101,69 @@ namespace crest {
     void SymbolicExpr::AppendToStringInt(string* s) const {
 		
         char buff[32];
-		sprintf(buff, "(+ %lld", const_);
+		sprintf(buff, "%lld", const_);
 		s->append(buff);
+
 
 		for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
 
 			sprintf(buff, " (* %lld x%u )", i->second, i->first);
 			s->append(buff);
-		}
+		    *s = "(+ " + *s + " )";
+        }
+/*		for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
 
-        *s += " )";
-		//s->push_back(' )');
+			sprintf(buff, " (* %lld x%u ) ", i->second, i->first);
+			s->append(buff);
+		    *s = "(+ " + *s + ") ";
+        }*/
 	}
 	
     void SymbolicExpr::AppendToStringFD(string* s) {
-		
-		for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
-			if (coeff_FD_.find(i->first) != coeff_FD_.end())
-		        coeff_FD_[i->first] += static_cast<value_double_t>(i->second); 
-            else 
-		        coeff_FD_[i->first] = static_cast<value_double_t>(i->second); 
-		}
+
+        for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
+            if (coeff_FD_.find(i->first) != coeff_FD_.end()) {
+                coeff_FD_[i->first] += static_cast<value_double_t>(i->second); 
+            } else {
+                coeff_FD_[i->first] = static_cast<value_double_t>(i->second); 
+            }
+        }
         const_FD_ += const_;
+        const_ = 0;
+        coeff_.clear();
 
         char buff[32];
-		sprintf(buff, "(+ %lf", const_FD_);
-		s->append(buff);
+        sprintf(buff, "%lf ", const_FD_);
+        s->append(buff);
 
-		for (ConstItFD i = coeff_FD_.begin(); i != coeff_FD_.end(); ++i) {
+        for (ConstItFD i = coeff_FD_.begin(); i != coeff_FD_.end(); ++i) {
 
-			sprintf(buff, " (* %lf x%u )", i->second, i->first);
-			s->append(buff);
-		}
+            sprintf(buff, " (* %lf x%u )", i->second, i->first);
+            s->append(buff);
+            *s = "(+ " + *s + " )";
+        }
+    }
 
-        *s += " )";
-		//s->push_back(' )');
-	}
-    
     void SymbolicExpr::AppendToString(string* s) const {
 	
         switch(isFloat) {
             case false:
                 AppendToStringInt(s);
+                break;
             case true: 
                 AppendToStringFD(s);
-                
+                break;
         }
 	}
 
 
 	void SymbolicExpr::Serialize(string* s) const {
-		assert(coeff_.size() < 128);
+
+//fprintf(stderr, "coeff_.size = %d\n", coeff_.size());
+		
+        assert(coeff_.size() < 128);
+
+        s->push_back(static_cast<char>(isFloat));
 
 		s->push_back(static_cast<char>(coeff_.size()));
 		s->append((char*)&const_, sizeof(value_t));
@@ -170,6 +182,10 @@ namespace crest {
 
 
 	bool SymbolicExpr::Parse(istream& s) {
+        
+
+        s.read((char*)&isFloat, sizeof(char));
+
         size_t len = static_cast<size_t>(s.get());
 		s.read((char*)&const_, sizeof(value_t));
 		if (s.fail()) return false;
@@ -187,7 +203,7 @@ namespace crest {
 		s.read((char*)&const_FD_, sizeof(value_double_t));
 		if (s.fail()) return false;
 
-		coeff_.clear();
+		coeff_FD_.clear();
 		for (size_t i = 0; i < len; i++) {
 			var_t v;
 			value_double_t c;
@@ -195,6 +211,8 @@ namespace crest {
 			s.read((char*)&c, sizeof(c));
 			coeff_FD_[v] = c;
 		}
+
+//fprintf(stderr, "coeff_.size = %d\n", coeff_.size());
 
 		return !s.fail();
 	}

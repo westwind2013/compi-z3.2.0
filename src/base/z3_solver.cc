@@ -30,7 +30,7 @@ using std::numeric_limits;
 using std::queue;
 using std::set;
 
-#define DEBUG(x) 
+#define DEBUG(x)
 
 #define USE_RANGE_CHECK 1
 
@@ -132,9 +132,13 @@ namespace crest {
 
 		if (!ex.limits_.empty()) {
 			for (auto limit: ex.limits_) {
-				tmp_expr = new SymbolicExpr(1LL, limit.first);
-				*tmp_expr -= limit.second;
-				tmpPred = new SymbolicPred(ops::LE, tmp_expr);
+                tmp_expr = new SymbolicExpr(1LL, limit.first);
+                if ((*ex.mutable_vars() )[limit.first] == types::FLOAT || 
+                    (*ex.mutable_vars() )[limit.first] == types::DOUBLE)
+                    *tmp_expr -= limit.second;
+                else *tmp_expr -= static_cast<value_t>(limit.second);
+				
+                tmpPred = new SymbolicPred(ops::LE, tmp_expr);
 				constraintsMPI.push_back(tmpPred);
 			}
 		}
@@ -185,6 +189,7 @@ namespace crest {
         	(*iter)->AppendToString(&str);
         	fprintf(stderr, "%s\n", str.c_str());	
         }
+        fprintf(stderr, "constraintsMPI.size() = %d", constraintsMPI.size());
         fprintf(stderr, "\n\n\n");
         fflush(stderr);
 
@@ -279,15 +284,16 @@ namespace crest {
 				constraints.pop_back();
 			}
 
-			// 
-			// hComment: if the variable is not present in the current solution, its old 
-			// assignment from the old solution will be taken
+            // 
+			// hComment: if the variable is not present in the current solution, 
+            // its old assignment from the old solution will be taken
 			//
 			for (set<var_t>::const_iterator i = tmp.begin(); i != tmp.end(); ++i) {
 				if (soln->find(*i) == soln->end()) {
 					soln->insert(make_pair(*i, old_soln[*i]));
 				}
 			}
+		
 			return true;
 		}
 
@@ -723,8 +729,11 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
         Z3_ast pred[2];
         Z3_ast ret;
 
-        DEBUG(fprintf(stderr, "%s: %s\n", __FUNCTION__, stmt.substr(*pos).c_str()));
-
+        DEBUG(fprintf(stderr, "%d, %s: %s\n", *pos, __FUNCTION__, stmt.substr(*pos).c_str()));
+        
+//fprintf(stderr, "%d, %s: %s\n", *pos, __FUNCTION__, stmt.substr(*pos).c_str());
+        
+        while (*pos < stmt.size() && stmt[*pos] == ' ') *pos += 1;
         if (stmt[*pos] == '(') {
             /* statement */
             /* compare ops */
@@ -734,51 +743,66 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
                 *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                
                 ret = Z3_mk_eq(ctx, pred[0], pred[1]);
             } else if (!stmt.compare(*pos, 2, "/=")) {
                 *pos = *pos + 3;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                
                 ret = Z3_mk_eq(ctx, pred[0], pred[1]);
                 ret = Z3_mk_not(ctx, ret);
             } else if (!stmt.compare(*pos, 2, "> ")) {
                 *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                
                 ret = Z3_mk_gt(ctx, pred[0], pred[1]);
             } else if (!stmt.compare(*pos, 2, "<=")) {
                 *pos = *pos + 3;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                
                 ret = Z3_mk_le(ctx, pred[0], pred[1]);
             } else if (!stmt.compare(*pos, 2, "< ")) {
                 *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                
                 ret = Z3_mk_lt(ctx, pred[0], pred[1]);
             } else if (!stmt.compare(*pos, 2, ">=")) {
                 *pos = *pos + 3;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+                
                 ret = Z3_mk_ge(ctx, pred[0], pred[1]);
             } else if (!stmt.compare(*pos, 2, "+ ")) {
                 *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+//fprintf(stderr, "left: %s\n", Z3_ast_to_string(ctx, pred[0]));
+//fprintf(stderr, "right: %s\n", Z3_ast_to_string(ctx, pred[1]));
+                
                 ret = Z3_mk_add(ctx, 2, pred);
             } else if (!stmt.compare(*pos, 2, "- ")) {
                 *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
-                DEBUG(fprintf(stderr, "left: %s\n", Z3_ast_to_string(ctx, pred[0])));
-                DEBUG(fprintf(stderr, "right: %s\n", Z3_ast_to_string(ctx, pred[1])));
+//fprintf(stderr, "left: %s\n", Z3_ast_to_string(ctx, pred[0]));
+//fprintf(stderr, "right: %s\n", Z3_ast_to_string(ctx, pred[1]));
+                
                 ret = Z3_mk_sub(ctx, 2, pred);
             } else if (!stmt.compare(*pos, 2, "* ")) {
                 *pos = *pos + 2;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
+//fprintf(stderr, "left: %s\n", Z3_ast_to_string(ctx, pred[0]));
+//fprintf(stderr, "right: %s\n", Z3_ast_to_string(ctx, pred[1]));
+//fflush(stderr); 
+                
                 ret = Z3_mk_mul(ctx, 2, pred);
-            } else if (!stmt.compare(*pos, 3, "div")) {
+            } 
+            /*else if (!stmt.compare(*pos, 3, "div")) {
                 *pos = *pos + 4;
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
@@ -788,13 +812,19 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
                 pred[0] = ParseStatement(ctx, vars, stmt, pos);
                 pred[1] = ParseStatement(ctx, vars, stmt, pos);
                 ret = Z3_mk_mod(ctx, pred[0], pred[1]);
-            } else {
+            }*/
+            else {
                 fprintf(stderr, "ERROR: unknown commands: %s\n", stmt.c_str());
             }
+            
+//fprintf(stderr, "pos = %d\n", *pos);
+            
             /* close the bracket */
             int start = *pos;
             int endpos = stmt.find(')', *pos) + 2;
             *pos += (endpos - start);
+            //*pos = stmt.find(')', *pos) + 1;
+
         } else if(stmt[*pos] == 'x') {
             /* variable */
             var_t vid;
@@ -802,31 +832,41 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
             int end = stmt.find(' ', start);
             string val = stmt.substr(start+1, end-start);
             sscanf(val.c_str(), "%d", &vid);
-//printf("Index: %d, %c\n", *pos, stmt[*pos]);
-//printf("vars.size(): %d; vid: %d\n", vars.size(), vid);
-//fflush(stdout);
             *pos =  *pos + (end - start) + 1;
+//fprintf(stderr, "x%d\n", vid);
+            
             ret = vars[vid];
         } else if(stmt[*pos] >= '0' && stmt[*pos] <= '9') {
             /* constant */
-            Z3_sort ty = Z3_mk_int_sort(ctx);
+            Z3_sort ty;
             int start = *pos;
             int end = stmt.find(' ', start) + 1;
             *pos = end;
             //*pos = *pos + (end - start);
             string val = stmt.substr(start, end-start-1);
+            
+            if (val.find('.') == string::npos) ty = Z3_mk_int_sort(ctx);
+            else ty = Z3_mk_real_sort(ctx);
+            //else ty = Z3_mk_fpa_sort_64(ctx);
+
             ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
         } else if (stmt[*pos] == '-' || stmt[*pos] == '+') {
             /* unary */
-            Z3_sort ty = Z3_mk_int_sort(ctx);
+            Z3_sort ty;
             int start = *pos;
             int end = stmt.find(' ', start) + 1;
             *pos = end;
             string val = stmt.substr(start, end-start-1);
+
+            if (val.find('.') == string::npos) ty = Z3_mk_int_sort(ctx);
+            else ty = Z3_mk_real_sort(ctx);
+            //else ty = Z3_mk_fpa_sort_64(ctx);
+
             ret = Z3_mk_numeral(ctx, const_cast<char*>(val.c_str()), ty);
         }
         
-        DEBUG(fprintf(stderr, "AST: %s\n", Z3_ast_to_string(ctx, ret)));
+        DEBUG(fprintf(stderr, "pos: %d, AST: %s\n", *pos, Z3_ast_to_string(ctx, ret)));
+        
         return ret;
     }
 
@@ -843,8 +883,9 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
         Z3_solver slv_z3 = mk_solver(ctx_z3); 
         // Create an integer type
         Z3_sort int_ty_z3 = Z3_mk_int_sort(ctx_z3);
-        Z3_sort f32_ty_z3 = Z3_mk_fpa_sort_32(ctx_z3);
-        Z3_sort f64_ty_z3 = Z3_mk_fpa_sort_64(ctx_z3);
+        Z3_sort real_ty_z3 = Z3_mk_real_sort(ctx_z3);
+        //Z3_sort f32_ty_z3 = Z3_mk_fpa_sort_32(ctx_z3);
+        //Z3_sort f64_ty_z3 = Z3_mk_fpa_sort_64(ctx_z3);
 
         // Type limits.
         vector<Z3_ast> min_expr_z3(types::LONG_LONG+1);
@@ -864,12 +905,20 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
         map<var_t,Z3_ast> x_expr_z3;
 
         for (VarIt i = vars.begin(); i != vars.end(); ++i) {
+            
             char buff[32];
             Z3_ast min, max;
             // Set a name for the current variable
             snprintf(buff, sizeof(buff), "x%d", i->first);
-            // Create an integer variable 
-            x_expr_z3[i->first] = mk_var(ctx_z3, buff, int_ty_z3);
+            
+            if (i->second == types::FLOAT || i->second == types::DOUBLE) { 
+                // Create an floating point  variable 
+                x_expr_z3[i->first] = mk_var(ctx_z3, buff, real_ty_z3);
+                continue;
+            } else {
+                // Create an integer variable 
+                x_expr_z3[i->first] = mk_var(ctx_z3, buff, int_ty_z3);
+            }
             // Set limits for the current variable
             min = Z3_mk_gt(ctx_z3, x_expr_z3[i->first], min_expr_z3[i->second]);
             max = Z3_mk_lt(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]);
@@ -918,12 +967,14 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
             int num_constraints = Z3_model_get_num_consts(ctx_z3, model_z3);
             
             for (int i = 0; i < num_constraints; i++) {
+                int idx;
+                double val;
                 Z3_symbol name;
-                // Get the i-th constant in the model
-                Z3_func_decl cnst = Z3_model_get_const_decl(ctx_z3, model_z3, i);
                 Z3_ast a, v;
                 Z3_bool ok;
 
+                // Get the i-th constant in the model
+                Z3_func_decl cnst = Z3_model_get_const_decl(ctx_z3, model_z3, i);
                 DEBUG(display_model(ctx_z3, stderr, model_z3));
 
                 // Get the constant declaration name 
@@ -932,13 +983,15 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
                 a = Z3_mk_app(ctx_z3, cnst, 0, 0);
                 v = a;
                 ok = Z3_model_eval(ctx_z3, model_z3, a, Z3_FALSE, &v);
-                int idx;
                 sscanf(Z3_get_symbol_string(ctx_z3, name), "x%d", &idx);
-                long val = strtol(Z3_get_numeral_string(ctx_z3, v), NULL, 0);
+                
+                if (vars[idx] == types::FLOAT || vars[idx] == types::DOUBLE)
+                    val = strtod(Z3_get_numeral_decimal_string(ctx_z3, v, 15), NULL);
+                else val = strtoll(Z3_get_numeral_decimal_string(ctx_z3, v, 15), NULL, 0);
 
-                DEBUG(fprintf(stderr, "%s %s | x%d %ld\n",
+                DEBUG(fprintf(stderr, "%s %s | x%d %lf\n",
                             Z3_get_symbol_string(ctx_z3, name),
-                            Z3_get_numeral_string(ctx_z3, v),
+                            Z3_get_numeral_decimal_string(ctx_z3, v, 15),
                             idx, val));
                 soln->insert(make_pair(idx, val));
             }

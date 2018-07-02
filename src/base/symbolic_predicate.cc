@@ -16,7 +16,13 @@ namespace crest {
 		: op_(ops::EQ), expr_(new SymbolicExpr(0LL)) { }
 
 	SymbolicPred::SymbolicPred(compare_op_t op, SymbolicExpr* expr)
-		: op_(op), expr_(expr) { }
+		: op_(op), expr_(expr) { 
+
+// hDel
+//string str;
+//AppendToString(&str);
+//fprintf(stderr, "%s\n", str.c_str());	
+    }
 
 	SymbolicPred::~SymbolicPred() {
 		delete expr_;
@@ -34,7 +40,7 @@ namespace crest {
         tmp.push_back('(');
         tmp.append(symbol[op_]);
 
-        *s = tmp + ' ' + *s + "0 )";
+        *s = tmp + ' ' + *s + " 0 )";
 	}
 
 /*

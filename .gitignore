@@ -1,8 +1,4 @@
 log
-bin/crestc
-bin/print_execution
-bin/process_cfg
-bin/run_crest
 mpi/
 src/process_cfg/process_cfg
 src/run_crest/run_crest

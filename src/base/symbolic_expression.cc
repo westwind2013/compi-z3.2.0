@@ -354,9 +354,8 @@ namespace crest {
                     coeff_FD_[i->first] = i->second * c;
                 else
                     coeff_FD_[i->first] += i->second * c;
-
-                coeff_.erase(i);
 			}
+            coeff_.clear();
 		}
 		return *this;
 	}

@@ -305,12 +305,12 @@ namespace crest {
 			value_double_t value) {
 		IFDEBUG(fprintf(stderr, "apply2 %d %lf\n", op, value));
 
-fprintf(stderr, "value = %lf\n", value);
+//fprintf(stderr, "value = %lf\n", value);
 
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
-
+/*
 if (a.expr) {
     string s;
     a.expr->AppendToString(&s);
@@ -325,7 +325,7 @@ if (b.expr) {
 } else {
     fprintf(stderr, "Null expression!\n");
 }
-
+*/
 		if (a.expr || b.expr) {
 			switch (op) {
 				case ops::ADD:
@@ -381,6 +381,7 @@ if (b.expr) {
         a.isFloat = true;
 		a.concreteFD = value;
 
+/*
 if (a.expr) {
     string s;
     a.expr->AppendToString(&s);
@@ -388,7 +389,7 @@ if (a.expr) {
 } else {
     fprintf(stderr, "Null expression!\n");
 }
-		
+*/		
         stack_.pop_back();
 		ClearPredicateRegister();
 		IFDEBUG(DumpMemory());

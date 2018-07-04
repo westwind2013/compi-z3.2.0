@@ -920,8 +920,8 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
                 x_expr_z3[i->first] = mk_var(ctx_z3, buff, int_ty_z3);
             }
             // Set limits for the current variable
-            min = Z3_mk_gt(ctx_z3, x_expr_z3[i->first], min_expr_z3[i->second]);
-            max = Z3_mk_lt(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]);
+            min = Z3_mk_ge(ctx_z3, x_expr_z3[i->first], min_expr_z3[i->second]);
+            max = Z3_mk_le(ctx_z3, x_expr_z3[i->first], max_expr_z3[i->second]);
 
 #if USE_RANGE_CHECK
             // Assert the two constraints into the logical context

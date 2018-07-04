@@ -189,9 +189,9 @@ namespace crest {
         //	(*iter)->AppendToString(&str);
         //	fprintf(stderr, "%s\n", str.c_str());	
         //}
-        fprintf(stderr, "constraintsMPI.size() = %d", constraintsMPI.size());
-        fprintf(stderr, "\n\n\n");
-        fflush(stderr);
+        //fprintf(stderr, "constraintsMPI.size() = %d", constraintsMPI.size());
+        //fprintf(stderr, "\n\n\n");
+        //fflush(stderr);
 
 		set<var_t> tmp;
 		typedef set<var_t>::const_iterator VarIt;
@@ -252,14 +252,14 @@ namespace crest {
         //
         // hEdit: print the constraints
         //
-        //fprintf(stderr, "dependent constraints\n");
-        //for (PredIt iter = dependent_constraints.begin(); iter < dependent_constraints.end(); iter++) {
-        //	string str;
-        //	(*iter)->AppendToString(&str);
-        //	fprintf(stderr, "%s\n", str.c_str());	
-        //}
-        //fprintf(stderr, "\n\n\n");
-        //fflush(stderr);
+        fprintf(stderr, "dependent constraints\n");
+        for (PredIt iter = dependent_constraints.begin(); iter < dependent_constraints.end(); iter++) {
+        	string str;
+        	(*iter)->AppendToString(&str);
+        	fprintf(stderr, "%s\n", str.c_str());	
+        }
+        fprintf(stderr, "\n\n\n");
+        fflush(stderr);
 
 		
 		soln->clear();
@@ -959,12 +959,13 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
         Z3_lbool success_z3 = Z3_solver_check(ctx_z3, slv_z3);
 
         // Constraint set is satisfiable
-        if (success_z3 == Z3_L_TRUE) {
+        if (Z3_L_TRUE == success_z3) {
             
             model_z3 = Z3_solver_get_model(ctx_z3, slv_z3);
 
             // Get the number of constants assigned by the model
             int num_constraints = Z3_model_get_num_consts(ctx_z3, model_z3);
+//fprintf(stderr, "Entering solver: %d\n", num_constraints);
             
             for (int i = 0; i < num_constraints; i++) {
                 int idx;
@@ -994,6 +995,8 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
                             Z3_get_numeral_decimal_string(ctx_z3, v, 15),
                             idx, val));
                 soln->insert(make_pair(idx, val));
+//fprintf(stderr, "sat: %d, %lf\n", idx, val);
+
             }
         } else if (success_z3 == Z3_L_FALSE) {
             DEBUG(fprintf(stderr, "ERR:  fail to solve\n"));
@@ -1004,8 +1007,7 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
 
         del_solver(ctx_z3, slv_z3);
         Z3_del_context(ctx_z3);
-        return success_z3;
+        
+        return Z3_L_TRUE == success_z3;
     }
-
-
 }  // namespace crest

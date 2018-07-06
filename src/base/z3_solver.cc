@@ -171,16 +171,6 @@ namespace crest {
         	"The size of constraints is %zu \n\n", 
         	constraintsMPI.size(), constraints.size());
             
-		
-		//
-		// hEdit: insert the MPI constraints
-		//
-		for (vector<SymbolicPred*>::iterator iter = constraintsMPI.begin(); 
-				iter < constraintsMPI.end(); iter++) {
-			//constraints.insert(constraints.end()-1, *iter);	
-			constraints.push_back(*iter);
-		}
-
         //
         // hEdit: print the constraints
         //
@@ -192,6 +182,16 @@ namespace crest {
         //fprintf(stderr, "constraintsMPI.size() = %d", constraintsMPI.size());
         fprintf(stderr, "\n\n\n");
         fflush(stderr);
+
+		
+		//
+		// hEdit: insert the MPI constraints
+		//
+		for (vector<SymbolicPred*>::iterator iter = constraintsMPI.begin(); 
+				iter < constraintsMPI.end(); iter++) {
+			//constraints.insert(constraints.end()-1, *iter);	
+			constraints.push_back(*iter);
+		}
 
 		set<var_t> tmp;
 		typedef set<var_t>::const_iterator VarIt;

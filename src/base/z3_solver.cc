@@ -174,14 +174,14 @@ namespace crest {
         //
         // hEdit: print the constraints
         //
-        for (PredIt iter = constraints.begin(); iter < constraints.end(); iter++) {
-        	string str;
-        	(*iter)->AppendToString(&str);
-        	fprintf(stderr, "%s\n", str.c_str());	
-        }
+        //for (PredIt iter = constraints.begin(); iter < constraints.end(); iter++) {
+        //	string str;
+        //	(*iter)->AppendToString(&str);
+        //	fprintf(stderr, "%s\n", str.c_str());	
+        //}
         //fprintf(stderr, "constraintsMPI.size() = %d", constraintsMPI.size());
-        fprintf(stderr, "\n\n\n");
-        fflush(stderr);
+        //fprintf(stderr, "\n\n\n");
+        //fflush(stderr);
 
 		
 		//

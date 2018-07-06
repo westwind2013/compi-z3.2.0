@@ -416,10 +416,10 @@ namespace crest {
             }
 
 
-int j = 0;
+//int j = 0;
             for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
-printf("%d, iter: %d, %d\n", j++, std::distance(i, coeff_.begin()), 
-    std::distance(i, coeff_.end()));
+//printf("%d, iter: %d, %d\n", j++, std::distance(i, coeff_.begin()), 
+//    std::distance(i, coeff_.end()));
                 if (coeff_FD_.find(i->first) == coeff_FD_.end())
                     coeff_FD_[i->first] = i->second * c;
                 else

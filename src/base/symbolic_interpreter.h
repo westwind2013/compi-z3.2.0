@@ -39,7 +39,7 @@ namespace crest {
 			void ClearStack(id_t id);
 			void Load(id_t id, addr_t addr, value_t value);
 			void Load(id_t id, addr_t addr, value_double_t value);
-			void Store(id_t id, addr_t addr);
+			void Store(id_t id, addr_t addr, bool value);
 
 			void ApplyUnaryOp(id_t id, unary_op_t op, value_t value);
 			void ApplyBinaryOp(id_t id, binary_op_t op, value_t value);

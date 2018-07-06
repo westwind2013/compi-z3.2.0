@@ -54,6 +54,11 @@ namespace crest {
 				return coeff_.empty() && coeff_FD_.empty();
 			}
 			
+			bool IsFloat() const {
+				return isFloat;
+			}
+
+            void syncFD();
 
             // hDel: redundant code
             /*

@@ -66,6 +66,28 @@ namespace crest {
 			i->second = -i->second;
 		}
 	}
+    
+    //
+    // hEdit: make a float-point expression consistent
+    // 
+    void SymbolicExpr::syncFD() {
+        
+        isFloat = true;
+        for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
+            if (coeff_FD_.find(i->first) != coeff_FD_.end()) {
+                coeff_FD_[i->first] += static_cast<value_double_t>(i->second);
+                if (fabs(coeff_FD_[i->first]) < EPSILON) 
+                    coeff_FD_.erase(i->first);
+            } else {
+                coeff_FD_[i->first] = static_cast<value_double_t>(i->second); 
+            }
+        }
+        const_FD_ += const_;
+       
+        // clear the non-float parts
+        const_ = 0;
+        coeff_.clear();
+    }
 
 	//
 	// hComment: find the set of marked variables without redundancy
@@ -121,16 +143,7 @@ namespace crest {
 	
     void SymbolicExpr::AppendToStringFD(string* s) {
 
-        for (ConstIt i = coeff_.begin(); i != coeff_.end(); ++i) {
-            if (coeff_FD_.find(i->first) != coeff_FD_.end()) {
-                coeff_FD_[i->first] += static_cast<value_double_t>(i->second); 
-            } else {
-                coeff_FD_[i->first] = static_cast<value_double_t>(i->second); 
-            }
-        }
-        const_FD_ += const_;
-        const_ = 0;
-        coeff_.clear();
+        syncFD();
 
         char buff[32];
         sprintf(buff, "%lf ", const_FD_);
@@ -217,95 +230,142 @@ namespace crest {
 		return !s.fail();
 	}
 
-
     const SymbolicExpr& SymbolicExpr::operator+=(const SymbolicExpr& e) {
-        isFloat |= e.isFloat;
 
-        const_ += e.const_;
-        for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
-            It j = coeff_.find(i->first);
-            if (j == coeff_.end()) {
-                coeff_.insert(*i);
-            } else {
-                j->second += i->second;
-                if (j->second == 0) {
-                    coeff_.erase(j);
+        // 
+        // hEdit: both expressions are non-float
+        //
+        if (!isFloat && !e.IsFloat()) {
+            const_ += e.const_;
+            for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
+                It j = coeff_.find(i->first);
+                if (j == coeff_.end()) {
+                    coeff_.insert(*i);
+                } else {
+                    j->second += i->second;
+                    if (j->second == 0) {
+                        coeff_.erase(j);
+                    }
                 }
             }
-        }
-
-        const_FD_ += e.const_FD_;
-        for (ConstItFD i = e.coeff_FD_.begin(); i != e.coeff_FD_.end(); ++i) {
-            ItFD j = coeff_FD_.find(i->first);
-            if (j == coeff_FD_.end()) {
-                coeff_FD_.insert(*i);
-            } else {
-                j->second += i->second;
-                if (fabs(j->second) < EPSILON){
-                    coeff_FD_.erase(j);
+        } else {
+            const_ += e.const_;
+            for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
+                It j = coeff_.find(i->first);
+                if (j == coeff_.end()) {
+                    coeff_.insert(*i);
+                } else {
+                    j->second += i->second;
+                    if (j->second == 0) {
+                        coeff_.erase(j);
+                    }
                 }
             }
+            
+            const_FD_ += e.const_FD_;
+            for (ConstItFD i = e.coeff_FD_.begin(); i != e.coeff_FD_.end(); ++i) {
+                ItFD j = coeff_FD_.find(i->first);
+                if (j == coeff_FD_.end()) {
+                    coeff_FD_.insert(*i);
+                } else {
+                    j->second += i->second;
+                    if (fabs(j->second) < EPSILON){
+                        coeff_FD_.erase(j);
+                    }
+                }
+            }
+
+            syncFD();
         }
 
         return *this;
     }
 
 
-	const SymbolicExpr& SymbolicExpr::operator-=(const SymbolicExpr& e) {
-		isFloat |= e.isFloat;
-		
-        const_ -= e.const_;
-        for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
-            It j = coeff_.find(i->first);
-            if (j == coeff_.end()) {
-                coeff_[i->first] = -i->second;
-            } else {
-                j->second -= i->second;
-                if (j->second == 0) {
-                    coeff_.erase(j);
+    const SymbolicExpr& SymbolicExpr::operator-=(const SymbolicExpr& e) {
+        isFloat |= e.isFloat;
+
+        if (!isFloat && !e.IsFloat()) {
+            const_ -= e.const_;
+            for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
+                It j = coeff_.find(i->first);
+                if (j == coeff_.end()) {
+                    coeff_[i->first] = -i->second;
+                } else {
+                    j->second -= i->second;
+                    if (j->second == 0) {
+                        coeff_.erase(j);
+                    }
                 }
             }
-        }
-        
-        const_FD_ -= e.const_FD_;
-		for (ConstItFD i = e.coeff_FD_.begin(); i != e.coeff_FD_.end(); ++i) {
-			ItFD j = coeff_FD_.find(i->first);
-			if (j == coeff_FD_.end()) {
-				coeff_FD_[i->first] = -i->second;
-			} else {
-				j->second -= i->second;
-                if (fabs(j->second) < EPSILON){
-                    coeff_FD_.erase(j);
+        } else { 
+            const_ -= e.const_;
+            for (ConstIt i = e.coeff_.begin(); i != e.coeff_.end(); ++i) {
+                It j = coeff_.find(i->first);
+                if (j == coeff_.end()) {
+                    coeff_[i->first] = -i->second;
+                } else {
+                    j->second -= i->second;
+                    if (j->second == 0) {
+                        coeff_.erase(j);
+                    }
                 }
-			}
-		}
+            }
+            
+            const_FD_ -= e.const_FD_;
+            for (ConstItFD i = e.coeff_FD_.begin(); i != e.coeff_FD_.end(); ++i) {
+                ItFD j = coeff_FD_.find(i->first);
+                if (j == coeff_FD_.end()) {
+                    coeff_FD_[i->first] = -i->second;
+                } else {
+                    j->second -= i->second;
+                    if (fabs(j->second) < EPSILON){
+                        coeff_FD_.erase(j);
+                    }
+                }
+            }
+
+            syncFD();
+        }
 
 		return *this;
 	}
 
 	const SymbolicExpr& SymbolicExpr::operator+=(value_t c) {
-		const_ += c;
-		return *this;
+		if (isFloat) const_FD_ += c;
+        else const_ += c;
+		
+        return *this;
 	}
 
 
 	const SymbolicExpr& SymbolicExpr::operator-=(value_t c) {
-		const_ -= c;
+		if (isFloat) const_FD_ -= c;
+        else const_ -= c;
+
 		return *this;
 	}
 
 
 	const SymbolicExpr& SymbolicExpr::operator+=(value_double_t c) {
-		isFloat = true;
-        const_FD_ += c;
+		if (isFloat) {
+            const_FD_ += c;    
+        } else {
+            const_FD_ += c;
+            syncFD();
+        } 
 
 		return *this;
 	}
 
 
 	const SymbolicExpr& SymbolicExpr::operator-=(value_double_t c) {
-		isFloat = true;
-        const_FD_ -= c;
+		if (isFloat) {
+            const_FD_ -= c;    
+        } else {
+            const_FD_ -= c;
+            syncFD();
+        } 
 
 		return *this;
 	}
@@ -315,17 +375,20 @@ namespace crest {
         if (c == 0) {
             coeff_.clear();
             const_ = 0;
+
             coeff_FD_.clear();
             const_FD_ = 0;
         } else {
-            const_ *= c;
-            for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
-                i->second *= c;
-            }
-            
-            const_FD_ *= c;
-            for (ItFD i = coeff_FD_.begin(); i != coeff_FD_.end(); ++i) {
-                i->second *= c;
+            if (isFloat) {
+                const_FD_ *= c;
+                for (ItFD i = coeff_FD_.begin(); i != coeff_FD_.end(); ++i) {
+                    i->second *= c;
+                }
+            } else {
+                const_ *= c;
+                for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
+                    i->second *= c;
+                }
             }
         }
 
@@ -335,7 +398,6 @@ namespace crest {
 
 
 	const SymbolicExpr& SymbolicExpr::operator*=(value_double_t c) {
-		isFloat = true;
         
         if (fabs(c) < EPSILON) {
 			coeff_.clear();
@@ -343,22 +405,34 @@ namespace crest {
             coeff_FD_.clear();
 			const_FD_ = 0;
 		} else {
-			const_FD_ = (const_FD_ + const_) * c;
+			
+            isFloat = true;
+
+            const_FD_ = (const_FD_ + const_) * c;
             const_ = 0;
 
             for (ItFD i = coeff_FD_.begin(); i != coeff_FD_.end(); ++i) {
                 i->second *= c;
             }
-			for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
-				if (coeff_FD_.find(i->first) == coeff_FD_.end())
+
+
+int j = 0;
+            for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
+printf("%d, iter: %d, %d\n", j++, std::distance(i, coeff_.begin()), 
+    std::distance(i, coeff_.end()));
+                if (coeff_FD_.find(i->first) == coeff_FD_.end())
                     coeff_FD_[i->first] = i->second * c;
                 else
                     coeff_FD_[i->first] += i->second * c;
 			}
+
             coeff_.clear();
 		}
-		return *this;
+        
+        return *this;
 	}
+
+
 	
     bool SymbolicExpr::operator==(const SymbolicExpr& e) const {
 		return isFloat? 

@@ -394,7 +394,7 @@ class crestInstrumentVisitor f =
 	(* hComment: create specific functions for all types of instructions *)
 	let loadFunc         = mkInstFunc "Load"  [addrArg; valArg] in
 	let loadFuncFD         = mkInstFunc "LoadFD"  [addrArg; valArgFDouble] in
-	let storeFunc        = mkInstFunc "Store" [addrArg] in
+	let storeFunc        = mkInstFunc "Store" [addrArg; boolArg] in
 	let clearStackFunc   = mkInstFunc "ClearStack" [] in
 	let apply1Func       = mkInstFunc "Apply1" [opArg; valArg] in
 	let apply2Func       = mkInstFunc "Apply2" [opArg; valArg] in
@@ -481,9 +481,15 @@ class crestInstrumentVisitor f =
                 )
     in
 
+    let isLvalFloat lv = 
+        match typeOfLval lv with 
+            | TFloat(_) -> 1
+            | _ -> 0
+    in
+
 	let mkLoad addr value    = mkInstCall loadFunc [toAddr addr; toValue value] in
 	let mkLoadFD addr value  = mkInstCall loadFuncFD [toAddr addr; toValueFDouble value] in
-	let mkStore addr         = mkInstCall storeFunc [toAddr addr] in
+	let mkStore addr b        = mkInstCall storeFunc [toAddr addr; integer b] in
 	let mkClearStack ()      = mkInstCall clearStackFunc [] in
 	let mkApply1 op value    = mkInstCall apply1Func [unaryOpCode op; toValue value] in
 	let mkApply2 op value    = mkInstCall apply2Func [binaryOpCode op; toValue value] in
@@ -671,7 +677,7 @@ class crestInstrumentVisitor f =
 		| Set (lv, e, _) ->
 			if (isSymbolicType (typeOf e)) && (hasAddress lv) then
 			(self#queueInstr (instrumentExpr e) ;
-			self#queueInstr [mkStore (addressOf lv)]) ;
+			self#queueInstr [mkStore (addressOf lv) (isLvalFloat lv)]) ;
 			SkipChildren
 		(* Don't instrument calls to functions marked as uninstrumented. *)
 		| Call (_, Lval (Var f, NoOffset), _, _)
@@ -702,22 +708,22 @@ class crestInstrumentVisitor f =
                                                 | TFloat(_, _) ->
                                                     ChangeTo [i ;
                                                     mkHandleReturnFD (Lval lv) ;
-                                                    mkStore (addressOf lv)]
+                                                    mkStore (addressOf lv) (isLvalFloat lv)]
                                                 | _ -> 
                                                     ChangeTo [i ;
                                                     mkHandleReturn (Lval lv) ;
-                                                    mkStore (addressOf lv)]
+                                                    mkStore (addressOf lv) (isLvalFloat lv)]
                                             )
                                         | _ -> 
                                             ChangeTo [i ;
                                             mkHandleReturn (Lval lv) ;
-                                            mkStore (addressOf lv)]
+                                            mkStore (addressOf lv) (isLvalFloat lv)]
                                     )
 							)
 						| _ ->
 							ChangeTo [i ;
 							mkHandleReturn (Lval lv) ;
-							mkStore (addressOf lv)]
+							mkStore (addressOf lv) (isLvalFloat lv)]
 					)
 				| _ ->
                     ( match exp with 
@@ -749,7 +755,7 @@ class crestInstrumentVisitor f =
 		if shouldSkipFunction f.svar then
 			SkipChildren
 		else
-			let instParam v = mkStore (addressOf (var v)) in
+			let instParam v = mkStore (addressOf (var v)) (isLvalFloat (var v)) in
 			let isSymbolic v = isSymbolicType v.vtype in
 			let (_, _, isVarArgs, _) = splitFunctionType f.svar.vtype in
 			let paramsToInst = List.filter isSymbolic f.sformals in

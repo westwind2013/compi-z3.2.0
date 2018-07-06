@@ -15,6 +15,7 @@
 #include <vector>
 #include <iostream>
 #include <cstdio>
+#include <unistd.h>
 
 #include "base/symbolic_interpreter.h"
 #include "libcrest/crest.h"
@@ -53,6 +54,8 @@ static void __CrestAtExit();
 
 
 void __CrestInit() {
+    
+    //sleep(20);
     // Initialize the random number generator.
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -86,7 +89,9 @@ void __CrestInit() {
 void __CrestAtExit() {
 
     // hEdit: debug
-    //fprintf(stderr, "\nAtExit\n");
+//fprintf(stderr, "\nAtExit\n");
+//fflush(stdout);
+//fflush(stderr);
 
     string outfile_name("szd_execution");
     const SymbolicExecution& ex = SI->execution();
@@ -154,9 +159,9 @@ void __CrestLoadFD(__CREST_ID id, __CREST_ADDR addr, __CREST_VALUE_DOUBLE val) {
         SI->Load(id, addr, val);
 }
 
-void __CrestStore(__CREST_ID id, __CREST_ADDR addr) {
+void __CrestStore(__CREST_ID id, __CREST_ADDR addr, __CREST_BOOL b) {
     if (!pre_symbolic)
-        SI->Store(id, addr);
+        SI->Store(id, addr, static_cast<bool>(b));
 }
 
 

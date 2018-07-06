@@ -167,7 +167,7 @@ namespace crest {
 		IFDEBUG(DumpMemory());
 	}
 	
-    void SymbolicInterpreter::Store(id_t id, addr_t addr) {
+    void SymbolicInterpreter::Store(id_t id, addr_t addr, bool isF) {
 		IFDEBUG(fprintf(stderr, "store %lu\n", addr));
 		
         assert(stack_.size() > 0);
@@ -175,7 +175,17 @@ namespace crest {
 		const StackElem& se = stack_.back();
 		if (se.expr) {
 			if (!se.expr->IsConcrete()) {
-				mem_[addr] = se.expr;
+				if (isF) {
+                    mem_[addr] = se.expr;
+                    // make this expression a floating point data type
+                    (*se.expr) += 0.0;
+                } else {
+                    if (!se.expr->IsFloat() ) mem_[addr] = se.expr;
+                    else {
+                        mem_.erase(addr);
+                        delete se.expr;
+                    }
+                }
 			} else {
 				mem_.erase(addr);
 				delete se.expr;
@@ -331,9 +341,9 @@ if (b.expr) {
 				case ops::ADD:
 					if (a.expr == NULL) {
 						swap(a, b);
-						*a.expr += b.concrete;
+						*a.expr += b.isFloat? b.concreteFD: b.concrete;
 					} else if (b.expr == NULL) {
-						*a.expr += b.concrete;
+						*a.expr += b.isFloat? b.concreteFD: b.concrete;
 					} else {
 						*a.expr += *b.expr;
 						delete b.expr;
@@ -344,9 +354,9 @@ if (b.expr) {
 					if (a.expr == NULL) {
 						b.expr->Negate();
 						swap(a, b);
-						*a.expr += b.concrete;
+						*a.expr += b.isFloat? b.concreteFD: b.concrete;
 					} else if (b.expr == NULL) {
-						*a.expr -= b.concrete;
+						*a.expr -= b.isFloat? b.concreteFD: b.concrete;
 					} else {
 						*a.expr -= *b.expr;
 						delete b.expr;
@@ -357,15 +367,14 @@ if (b.expr) {
 				case ops::MULTIPLY:
 					if (a.expr == NULL) {
 						swap(a, b);
-						if (b.isFloat) *a.expr *= b.concreteFD;
-                        else *a.expr *= b.concrete;
+					    *a.expr *= b.isFloat? b.concreteFD: b.concrete;	
 					} else if (b.expr == NULL) {
-						if (b.isFloat) *a.expr *= b.concreteFD;
-                        else *a.expr *= b.concrete;
+					    *a.expr *= b.isFloat? b.concreteFD: b.concrete;	
 					} else {
 						//swap(a, b);
-						if (b.isFloat) *a.expr *= b.concreteFD;
-                        else *a.expr *= b.concrete;
+						//if (b.isFloat) *a.expr *= b.concreteFD;
+                        //else *a.expr *= b.concrete;
+					    *a.expr *= b.isFloat? b.concreteFD: b.concrete;	
 						delete b.expr;
 					}
 					break;
@@ -374,7 +383,7 @@ if (b.expr) {
 					// Concrete operator.
 					delete a.expr;
 					delete b.expr;
-					//a.expr = NULL;
+					a.expr = NULL;
 			}
 		}
         
@@ -402,44 +411,15 @@ if (a.expr) {
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
-        a.isFloat |= b.isFloat;
-        b.isFloat = a.isFloat;
 
-        if (a.isFloat) {
-            if (a.expr || b.expr) {
-                // Symbolically compute "a -= b".
-                if (a.expr == NULL) {
-                    b.expr->Negate();
-                    swap(a, b);
-                    *a.expr += b.concrete;
-                    *a.expr += b.concreteFD;
-                } else if (b.expr == NULL) {
-                    *a.expr -= b.concrete;
-                    *a.expr -= b.concreteFD;
-                } else {
-                    *a.expr -= *b.expr;
-                    delete b.expr;
-                }
-                // Construct a symbolic predicate (if "a - b" is symbolic), and
-                // store it in the predicate register.
-                if (!a.expr->IsConcrete()) {
-                    pred_ = new SymbolicPred(op, a.expr);
-                } else {
-                    ClearPredicateRegister();
-                    delete a.expr;
-                }
-                // We leave a concrete value on the stack.
-                a.expr = NULL;
-            }
-        }
-        else if (a.expr || b.expr) {
+        if (a.expr || b.expr) {
 			// Symbolically compute "a -= b".
 			if (a.expr == NULL) {
 				b.expr->Negate();
 				swap(a, b);
-				*a.expr += b.concrete;
+				*a.expr += b.isFloat? b.concreteFD: b.concrete;
 			} else if (b.expr == NULL) {
-				*a.expr -= b.concrete;
+				*a.expr -= b.isFloat? b.concreteFD: b.concrete;
 			} else {
 				*a.expr -= *b.expr;
 				delete b.expr;
@@ -455,8 +435,10 @@ if (a.expr) {
 			// We leave a concrete value on the stack.
 			a.expr = NULL;
 		}
-        
+       
+        a.isFloat = false;
 		a.concrete = value;
+
 		stack_.pop_back();
 		IFDEBUG(DumpMemory());
 	}
@@ -604,7 +586,7 @@ if (a.expr) {
     value_double_t SymbolicInterpreter::NewInputFD(type_t type, addr_t addr, value_double_t limit) {
         IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-        mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
+        mem_[addr] = new SymbolicExpr(1.0, num_inputs_);
         ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
         value_double_t ret = 0;
@@ -814,7 +796,8 @@ if (a.expr) {
 
         se.isFloat = false;
 		se.expr = expr;
-		se.concrete = value;
+		
+        se.concrete = value;
 		se.concreteFD = 0.0;
 	}
 
@@ -824,7 +807,8 @@ if (a.expr) {
 		
         se.isFloat = true;
         se.expr = expr;
-		se.concreteFD = value;
+		
+        se.concreteFD = value;
 		se.concrete = 0;
 	}
 

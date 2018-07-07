@@ -167,9 +167,9 @@ namespace crest {
         //
         // hEdit: debug 
         // 
-        fprintf(stderr, "The size of constraintsMPI is %zu \n"
-        	"The size of constraints is %zu \n\n", 
-        	constraintsMPI.size(), constraints.size());
+        //fprintf(stderr, "The size of constraintsMPI is %zu \n"
+        //	"The size of constraints is %zu \n\n", 
+        // 	constraintsMPI.size(), constraints.size());
             
         //
         // hEdit: print the constraints
@@ -252,14 +252,15 @@ namespace crest {
         //
         // hEdit: print the constraints
         //
-        fprintf(stderr, "dependent constraints\n");
-        for (PredIt iter = dependent_constraints.begin(); iter < dependent_constraints.end(); iter++) {
-        	string str;
-        	(*iter)->AppendToString(&str);
-        	fprintf(stderr, "%s\n", str.c_str());	
-        }
-        fprintf(stderr, "\n\n\n");
-        fflush(stderr);
+        //fprintf(stderr, "dependent constraints\n");
+        //for (PredIt iter = dependent_constraints.begin(); 
+        //    iter < dependent_constraints.end(); iter++) {
+        //	string str;
+        //	(*iter)->AppendToString(&str);
+        //	fprintf(stderr, "%s\n", str.c_str());	
+        //}
+        //fprintf(stderr, "\n\n\n");
+        //fflush(stderr);
 
 		
 		soln->clear();

@@ -416,10 +416,7 @@ namespace crest {
             }
 
 
-//int j = 0;
             for (It i = coeff_.begin(); i != coeff_.end(); ++i) {
-//printf("%d, iter: %d, %d\n", j++, std::distance(i, coeff_.begin()), 
-//    std::distance(i, coeff_.end()));
                 if (coeff_FD_.find(i->first) == coeff_FD_.end())
                     coeff_FD_[i->first] = i->second * c;
                 else
@@ -435,9 +432,11 @@ namespace crest {
 
 	
     bool SymbolicExpr::operator==(const SymbolicExpr& e) const {
-		return isFloat? 
+//if(isFloat) fprintf(stderr, "isFloat: true\n\n");
+//else fprintf(stderr, "isFloat: false\n\n");
+        return isFloat? 
             ((fabs(const_ - e.const_) < EPSILON) && 
-                (coeff_ == e.coeff_)) :
+                (coeff_FD_ == e.coeff_FD_)) :
             ((const_ == e.const_) && (coeff_ == e.coeff_));
 	}
 

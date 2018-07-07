@@ -63,9 +63,18 @@ namespace crest {
 		return (expr_->Parse(s) && !s.fail());
 	}
 
-	bool SymbolicPred::Equal(const SymbolicPred& p) const {
-		return ((op_ == p.op_) && (*expr_ == *p.expr_));
-	}
+    bool SymbolicPred::Equal(const SymbolicPred& p) const {
+/*
+        string str;
+        AppendToString(&str);
+        fprintf(stderr, "\n\n%s\n", str.c_str());	
+
+        str.clear();
+        p.AppendToString(&str);
+        fprintf(stderr, "%s\n\n", str.c_str());	
+*/
+        return ((op_ == p.op_) && (*expr_ == *p.expr_));
+    }
 
 
 }  // namespace crest

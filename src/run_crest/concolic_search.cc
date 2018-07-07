@@ -671,8 +671,10 @@ DFS(i+1, cur_ex);
 		for (size_t i = pos; (i < path.constraints().size()) && (depth > 0); i++) {
 			// Solve constraints[0..i].
 			if (!SolveAtBranch(prev_ex, i, &input)) {
+//fprintf(stderr, "FAIL: %u\n", i);
 				continue;
 			}
+//fprintf(stderr, "SUCCESS: %u\n", i);
 
 			// Run on those constraints.
 			RunProgram(input, &cur_ex);

@@ -67,7 +67,7 @@ namespace crest {
 
     void SymbolicPath::Serialize(string* s) const {
         typedef vector<SymbolicPred*>::const_iterator ConIt;
-
+/*
         fprintf(stderr, "branches' size: %zu\n"
         		"constraints' size: %zu\n", 
         		branches_.size(), constraints_.size());
@@ -80,7 +80,7 @@ namespace crest {
         }
         fprintf(stderr, "\n\n\n");
         fflush(stderr);
-
+*/
         // Write the path.
         size_t len = branches_.size();
 

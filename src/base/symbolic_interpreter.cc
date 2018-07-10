@@ -341,9 +341,11 @@ if (b.expr) {
 				case ops::ADD:
 					if (a.expr == NULL) {
 						swap(a, b);
-						*a.expr += b.isFloat? b.concreteFD: b.concrete;
+						if (b.isFloat) *a.expr += b.concreteFD;
+                        else *a.expr += b.concrete;
 					} else if (b.expr == NULL) {
-						*a.expr += b.isFloat? b.concreteFD: b.concrete;
+						if (b.isFloat) *a.expr += b.concreteFD;
+                        else *a.expr += b.concrete;
 					} else {
 						*a.expr += *b.expr;
 						delete b.expr;
@@ -354,9 +356,11 @@ if (b.expr) {
 					if (a.expr == NULL) {
 						b.expr->Negate();
 						swap(a, b);
-						*a.expr += b.isFloat? b.concreteFD: b.concrete;
+						if (b.isFloat) *a.expr += b.concreteFD;
+                        else *a.expr += b.concrete;
 					} else if (b.expr == NULL) {
-						*a.expr -= b.isFloat? b.concreteFD: b.concrete;
+						if (b.isFloat) *a.expr -= b.concreteFD;
+                        else *a.expr -= b.concrete;
 					} else {
 						*a.expr -= *b.expr;
 						delete b.expr;
@@ -367,15 +371,17 @@ if (b.expr) {
 				case ops::MULTIPLY:
 					if (a.expr == NULL) {
 						swap(a, b);
-					    *a.expr *= b.isFloat? b.concreteFD: b.concrete;	
+						if (b.isFloat) *a.expr *= b.concreteFD;
+                        else *a.expr *= b.concrete;
 					} else if (b.expr == NULL) {
-					    *a.expr *= b.isFloat? b.concreteFD: b.concrete;	
+						if (b.isFloat) *a.expr *= b.concreteFD;
+                        else *a.expr *= b.concrete;
 					} else {
 						//swap(a, b);
-						//if (b.isFloat) *a.expr *= b.concreteFD;
-                        //else *a.expr *= b.concrete;
-					    *a.expr *= b.isFloat? b.concreteFD: b.concrete;	
-						delete b.expr;
+						if (b.isFloat) *a.expr *= b.concreteFD;
+                        else *a.expr *= b.concrete;
+						
+                        delete b.expr;
 					}
 					break;
 
@@ -417,9 +423,11 @@ if (a.expr) {
 			if (a.expr == NULL) {
 				b.expr->Negate();
 				swap(a, b);
-				*a.expr += b.isFloat? b.concreteFD: b.concrete;
+                if (b.isFloat) *a.expr += b.concreteFD;
+                else *a.expr += b.concrete;
 			} else if (b.expr == NULL) {
-				*a.expr -= b.isFloat? b.concreteFD: b.concrete;
+                if (b.isFloat) *a.expr -= b.concreteFD;
+                else *a.expr -= b.concrete;
 			} else {
 				*a.expr -= *b.expr;
 				delete b.expr;

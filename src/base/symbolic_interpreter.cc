@@ -54,7 +54,7 @@ namespace crest {
 
 		}
 
-	SymbolicInterpreter::SymbolicInterpreter(const vector<value_t>& input, size_t exec_times) :
+	SymbolicInterpreter::SymbolicInterpreter(const vector<value_double_t>& input, size_t exec_times) :
 		ex_(true), num_inputs_(0), pred_(NULL), return_value_(false) {
 			stack_.reserve(16);
 			ex_.mutable_inputs()->assign(input.begin(), input.end());

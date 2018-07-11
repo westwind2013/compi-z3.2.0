@@ -62,7 +62,7 @@ void __CrestInit() {
     srand((tv.tv_sec * 1000000) + tv.tv_usec);
 
     // Read the input.
-    vector<value_t> input;
+    vector<value_double_t> input;
     //system("cat input");
 
     std::ifstream in("input");

@@ -577,12 +577,23 @@ class crestInstrumentVisitor f =
 	* Instrument an expression.
 	*)
 	let rec instrumentExpr e =
-		if isConstant e then
-			match e with 
+		(*
+        * hEdit: fix a bug, which is unable to identify a negative real value
+        *)
+        if isConstant e then
+                match e with
+                | Const(CInt64(_)) ->
+                        [mkLoad noAddr e]
+                | Const(CChr(_)) ->
+                        [mkLoad noAddr e]
+                | _ ->
+                        [mkLoadFD noAddr e]
+(*			match e with 
             | Const(CReal(_)) -> 
                 [mkLoadFD noAddr e]
             | _ ->
                 [mkLoad noAddr e]
+*)
 		else
 		match e with
 			| Lval lv when hasAddress lv ->

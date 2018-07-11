@@ -161,7 +161,7 @@ make -C .. _build/feature_config.ml # cached
 File "src/ext/crestAll.ml", line 550, characters 5-6:
 Warning 11: this match case is unused.
 # Target: src/main.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/main.cmo, file:src/main.ml, implem, ocaml, quiet, traverse }
-/usr/bin/ocamlc -c -g -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/main.cmo src/main.ml
+/usr/bin/ocamlc -c -g -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/main.cmo src/main.ml # cached
 # Target: src/ext/callgraph.ml.depends, tags: { extension:ml, file:src/ext/callgraph.ml, ocaml, ocamldep, quiet, traverse }
 /usr/bin/ocamldep -modules src/ext/callgraph.ml > src/ext/callgraph.ml.depends # cached
 # Target: src/cil.ml.depends, tags: { extension:ml, file:src/cil.ml, ocaml, ocamldep, quiet, traverse }

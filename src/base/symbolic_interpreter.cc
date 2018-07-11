@@ -114,13 +114,21 @@ namespace crest {
 			} else if ((i == stack_.size() - 1) && pred_) {
 				pred_->AppendToString(&s);
 			}
-			if ((i == (stack_.size() - 1)) && return_value_) {
-				fprintf(stderr, "s%d: %lld [ %s ] (RETURN VALUE)\n", i,
-						stack_[i].concrete, s.c_str());
-			} else {
-				fprintf(stderr, "s%d: %lld [ %s ]\n", i, stack_[i].concrete,
-						s.c_str());
-			}
+            if ((i == (stack_.size() - 1)) && return_value_) {
+                if (stack_[i].isFloat)
+                    fprintf(stderr, "s%d: %lf [ %s ] (RETURN VALUE)\n", i,
+                            stack_[i].concreteFD, s.c_str());
+                else 
+                    fprintf(stderr, "s%d: %lld [ %s ] (RETURN VALUE)\n", i,
+                            stack_[i].concrete, s.c_str());
+            } else {
+                if (stack_[i].isFloat)
+                    fprintf(stderr, "s%d: %lf [ %s ]\n", i, 
+                            stack_[i].concreteFD, s.c_str());
+                else
+                    fprintf(stderr, "s%d: %lld [ %s ]\n", i, 
+                        stack_[i].concrete, s.c_str());
+            }
 		}
 		if ((stack_.size() == 0) && return_value_) {
 			fprintf(stderr, "MISSING RETURN VALUE\n");
@@ -463,6 +471,15 @@ if (a.expr) {
 		IFDEBUG(fprintf(stderr, "return\n"));
 
 		ex_.mutable_path()->Push(kReturnId);
+
+//
+// hEdit: temporary solution for a bug occuring when testing susy-hmc
+// 
+if (stack_.size() > 1) {
+    StackElem e = stack_.back();
+    stack_.clear();
+    stack_.push_back(e);
+}
 
 		// There is either exactly one value on the stack -- the current function's
 		// return value -- or the stack is empty.

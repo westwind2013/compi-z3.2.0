@@ -581,14 +581,20 @@ class crestInstrumentVisitor f =
         * hEdit: fix a bug, which is unable to identify a negative real value
         *)
         if isConstant e then
-                match e with
+            match typeOf e with
+            | TFloat(_) ->
+                [mkLoadFD noAddr e]
+            | _ ->        
+                [mkLoad noAddr e]
+
+(*                match e with
                 | Const(CInt64(_)) ->
                         [mkLoad noAddr e]
                 | Const(CChr(_)) ->
                         [mkLoad noAddr e]
                 | _ ->
                         [mkLoadFD noAddr e]
-(*			match e with 
+			match e with 
             | Const(CReal(_)) -> 
                 [mkLoadFD noAddr e]
             | _ ->

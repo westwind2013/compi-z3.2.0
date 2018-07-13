@@ -43,6 +43,12 @@ namespace crest {
         *s = tmp + ' ' + *s + " 0 )";
 	}
 
+    void Print() const {
+        string str;
+        AppendToString(&str);
+        fprintf(stderr, "Expr: %s\n", str.c_str());
+    }
+
 /*
 	void SymbolicPred::AppendToString(string* s) const {
 		const char* symbol[] = { "=", "/=", ">", "<=", "<", ">=" };

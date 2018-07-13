@@ -170,6 +170,12 @@ namespace crest {
 	}
 
 
+    void SymbolicExpr::Print() const {
+        string str;
+        AppendToString(&str);
+        fprintf(stderr, "Expr: %s\n", str.c_str());
+    }
+
 	void SymbolicExpr::Serialize(string* s) const {
 
 //fprintf(stderr, "coeff_.size = %d\n", coeff_.size());

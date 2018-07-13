@@ -43,7 +43,7 @@ namespace crest {
         *s = tmp + ' ' + *s + " 0 )";
 	}
 
-    void Print() const {
+    void SymbolicPred::Print() const {
         string str;
         AppendToString(&str);
         fprintf(stderr, "Expr: %s\n", str.c_str());

@@ -150,13 +150,53 @@ namespace crest {
 
 	void SymbolicInterpreter::Load(id_t id, addr_t addr, value_t value) {
 		IFDEBUG(fprintf(stderr, "load %lu %lld\n", addr, value));
-		
+	
+//if (id == 14856 || id == 14857) fprintf(stderr, "ADDR: %d, 0x%x\n", id, addr);
+
         ConstMemIt it = mem_.find(addr);
-		if (it == mem_.end()) {
+
+        if (it != mem_.end()) {
+            if (it->second && !it->second->IsFloat() ) {
+                PushSymbolic(new SymbolicExpr(*it->second), value);
+/*                if (id == 14856 || id == 14857) {
+                    fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
+                    stack_.back().expr->Print();
+                }
+*/            
+            } else {
+                mem_.erase(it);
+                PushConcrete(value);
+/*                if (id == 14856 || id == 14857) {
+                    fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
+                    //stack_.back().expr->Print();
+                }
+*/            
+            }
+        } else {
+            PushConcrete(value);
+/*            if (id == 14856 || id == 14857) {
+                fprintf(stderr, "%d, conc2\n", stack_.size());
+                //stack_.back().expr->Print();
+            }
+*/        
+        }
+        fflush(stderr);
+/*
+        if (it == mem_.end()) {
 			PushConcrete(value);
+if (id == 14856 || id == 14857) {
+    fprintf(stderr, "%d, conc\n", stack_.size());
+    stack_.back().expr->Print();
+}
 		} else {
 			PushSymbolic(new SymbolicExpr(*it->second), value);
-		}
+if (id == 14856 || id == 14857) {
+    fprintf(stderr, "%d, symb\n", stack_.size());
+    stack_.back().expr->Print();
+}
+        }
+*/
+
 		ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
@@ -184,12 +224,14 @@ namespace crest {
 		if (se.expr) {
 			if (!se.expr->IsConcrete()) {
 				if (isF) {
-                    mem_[addr] = se.expr;
                     // make this expression a floating point data type
                     (*se.expr) += 0.0;
+                    mem_[addr] = se.expr;
                 } else {
                     if (!se.expr->IsFloat() ) mem_[addr] = se.expr;
                     else {
+                        //se.expr->FD2INT();
+                        //mem_[addr] = se.expr;
                         mem_.erase(addr);
                         delete se.expr;
                     }
@@ -385,7 +427,7 @@ if (b.expr) {
 						if (b.isFloat) *a.expr *= b.concreteFD;
                         else *a.expr *= b.concrete;
 					} else {
-						//swap(a, b);
+						swap(a, b);
 						if (b.isFloat) *a.expr *= b.concreteFD;
                         else *a.expr *= b.concrete;
 						

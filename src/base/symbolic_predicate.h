@@ -33,6 +33,7 @@ namespace crest {
 
 			void Negate();
 			void AppendToString(string* s) const;
+            void Print() const;
 
 			void Serialize(string* s) const;
 			bool Parse(istream& s);

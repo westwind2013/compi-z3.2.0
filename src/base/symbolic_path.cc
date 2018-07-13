@@ -53,16 +53,13 @@ namespace crest {
                 branchesHash[bid] = state;
                 constraints_.push_back(constraint);
                 constraints_idx_.push_back(branches_.size());
+                
+                fprintf(stderr, "bid: %d  +  ", bid);
+                constraint->Print();
             }
         }
 
         branches_.push_back(bid);
-        // 
-        // hEdit: debug
-        // 
-        //string tmp;
-        //constraint->AppendToString(&tmp);
-        //fprintf(stderr, "%s @ branch %d \n\n", tmp.c_str(), bid);
     }
 
     void SymbolicPath::Serialize(string* s) const {

@@ -58,6 +58,7 @@ namespace crest {
 				return isFloat;
 			}
 
+            void FD2INT();
             void syncFD();
 
             // hDel: redundant code
@@ -71,6 +72,7 @@ namespace crest {
 			bool DependsOn(const map<var_t, type_t>& vars) const;
 
 			void AppendToString(string* s) const;
+            void Print() const;
 
 			void Serialize(string* s) const;
 			bool Parse(istream& s);

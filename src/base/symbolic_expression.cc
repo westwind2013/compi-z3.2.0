@@ -89,6 +89,23 @@ namespace crest {
         coeff_.clear();
     }
 
+
+    void SymbolicExpr::FD2INT() {
+        
+        isFloat = false;
+        
+        coeff_.clear();
+        for (ConstItFD i = coeff_FD_.begin(); i != coeff_FD_.end(); ++i) {
+            coeff_[i->first] = static_cast<value_t>(i->second);
+        }
+        const_ = static_cast<value_t>(const_FD_);
+       
+        // clear the non-float parts
+        const_FD_ = 0;
+        coeff_FD_.clear();
+    }
+
+
 	//
 	// hComment: find the set of marked variables without redundancy
 	//

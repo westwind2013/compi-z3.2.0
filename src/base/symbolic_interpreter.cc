@@ -158,15 +158,15 @@ namespace crest {
         if (it != mem_.end()) {
             if (it->second && !it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
-/*                if (id == 14856 || id == 14857) {
+/*                if (id == 7746 || id == 7745) {
                     fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
                     stack_.back().expr->Print();
                 }
-*/            
+  */          
             } else {
                 mem_.erase(it);
                 PushConcrete(value);
-/*                if (id == 14856 || id == 14857) {
+/*                if (id == 7746 || id == 7745) {
                     fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
                     //stack_.back().expr->Print();
                 }
@@ -174,7 +174,7 @@ namespace crest {
             }
         } else {
             PushConcrete(value);
-/*            if (id == 14856 || id == 14857) {
+/*            if (id == 7746 || id == 7745) {
                 fprintf(stderr, "%d, conc2\n", stack_.size());
                 //stack_.back().expr->Print();
             }
@@ -230,10 +230,10 @@ if (id == 14856 || id == 14857) {
                 } else {
                     if (!se.expr->IsFloat() ) mem_[addr] = se.expr;
                     else {
-                        //se.expr->FD2INT();
-                        //mem_[addr] = se.expr;
-                        mem_.erase(addr);
-                        delete se.expr;
+                        se.expr->FD2INT();
+                        mem_[addr] = se.expr;
+                        //mem_.erase(addr);
+                        //delete se.expr;
                     }
                 }
 			} else {
@@ -653,7 +653,7 @@ if (stack_.size() > 1) {
     value_double_t SymbolicInterpreter::NewInputFD(type_t type, addr_t addr, value_double_t limit) {
         IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
 
-        mem_[addr] = new SymbolicExpr(1.0, num_inputs_);
+        mem_[addr] = new SymbolicExpr(1.0f, num_inputs_);
         ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
         value_double_t ret = 0;

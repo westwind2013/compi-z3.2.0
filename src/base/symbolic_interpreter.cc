@@ -208,12 +208,38 @@ if (id == 14856 || id == 14857) {
 		IFDEBUG(fprintf(stderr, "load %lu %lf\n", addr, value));
 		
         ConstMemIt it = mem_.find(addr);
-		if (it == mem_.end()) {
+        if (it != mem_.end()) {
+            if (it->second->IsFloat() ) {
+                PushSymbolic(new SymbolicExpr(*it->second), value);
+                if (id == 13567 || id == 13568) {
+                    fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
+                    stack_.back().expr->Print();
+                }
+            } else {
+                //mem_.erase(it);
+                SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
+                pExpr->syncFD();
+                PushSymbolic(pExpr, value);
+                
+                //PushConcrete(value);
+                if (id == 13567 || id == 13568) {
+                    fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
+                    stack_.back().expr->Print();
+                }
+            }
+        } else {
+            PushConcrete(value);
+            if (id == 13567 || id == 13568) {
+                fprintf(stderr, "%d, conc2\n", stack_.size());
+            }
+        
+        }
+/*		if (it == mem_.end()) {
 			PushConcrete(value);
 		} else {
 			PushSymbolic(new SymbolicExpr(*it->second), value);
 		}
-
+*/
 		ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
@@ -231,8 +257,9 @@ if (id == 14856 || id == 14857) {
                     (*se.expr) += 0.0;
                     mem_[addr] = se.expr;
                 } else {
-                    if (!se.expr->IsFloat() ) mem_[addr] = se.expr;
-                    else {
+                    if (!se.expr->IsFloat() ) {
+                        mem_[addr] = se.expr;
+                    } else {
                         se.expr->FD2INT();
                         mem_[addr] = se.expr;
                         //mem_.erase(addr);

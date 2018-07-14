@@ -156,29 +156,32 @@ namespace crest {
         ConstMemIt it = mem_.find(addr);
 
         if (it != mem_.end()) {
-            if (it->second && !it->second->IsFloat() ) {
+            if (!it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
-/*                if (id == 7746 || id == 7745) {
+                if (id == 13567 || id == 13568) {
                     fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
                     stack_.back().expr->Print();
                 }
-  */          
+
             } else {
-                mem_.erase(it);
-                PushConcrete(value);
-/*                if (id == 7746 || id == 7745) {
+                //mem_.erase(it);
+                SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
+                pExpr->FD2INT();
+                PushSymbolic(pExpr, value);
+                
+                //PushConcrete(value);
+                if (id == 13567 || id == 13568) {
                     fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
-                    //stack_.back().expr->Print();
+                    stack_.back().expr->Print();
                 }
-*/            
+            
             }
         } else {
             PushConcrete(value);
-/*            if (id == 7746 || id == 7745) {
+            if (id == 13567 || id == 13568) {
                 fprintf(stderr, "%d, conc2\n", stack_.size());
-                //stack_.back().expr->Print();
             }
-*/        
+        
         }
         fflush(stderr);
 /*

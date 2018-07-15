@@ -119,6 +119,16 @@ namespace crest {
 		}
 	}
 
+
+    //
+    // hEdit: check if a variable exists in the expression
+    //
+    bool SymbolicExpr::VarExist(var_t var) const{
+        return ( coeff_.find(var) != coeff_.end() ||
+            coeff_FD_.find(var) != coeff_FD_.end() );
+    }
+
+
 	// 
 	// hComment: check if any variables used in the expression exists 
 	// in vars

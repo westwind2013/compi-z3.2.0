@@ -70,6 +70,7 @@ namespace crest {
 
 			void AppendVars(set<var_t>* vars) const;
 			bool DependsOn(const map<var_t, type_t>& vars) const;
+            bool VarExist(var_t var) const; 
 
 			void AppendToString(string* s) const;
             void Print() const;

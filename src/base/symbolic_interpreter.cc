@@ -784,6 +784,7 @@ if (stack_.size() > 1) {
 		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
+
 		value_t ret = 0;
 		if (num_inputs_ < ex_.inputs().size()) {
 			ret = CastTo(ex_.inputs()[num_inputs_], type);

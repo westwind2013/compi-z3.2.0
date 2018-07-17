@@ -250,7 +250,7 @@ EXTERN void __CrestDoubleWithLimit(double* x, __CREST_VALUE_DOUBLE limit) __SKIP
 // the size of MPI_COMM_WORLD
 //
 EXTERN void __CrestRank(int* x) __SKIP;
-EXTERN void __CrestRankNonDefaultComm1(int* x) __SKIP;
+EXTERN void __CrestRankNonDefaultComm1(int* x, __CREST_BOOL b) __SKIP;
 EXTERN void __CrestRankNonDefaultComm2(MPI_Comm comm, int *x) __SKIP;
 EXTERN void __CrestWorldSize(int* x) __SKIP;
 EXTERN void __CrestWorldSizeWithLimit(int* x, __CREST_VALUE limit) __SKIP;

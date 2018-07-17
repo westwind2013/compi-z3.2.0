@@ -411,7 +411,7 @@ class crestInstrumentVisitor f =
 	(* hEdit: add a new function that marks MPI_rank in MPI_COMM_WORLD *)
 	let rankFunc   = mkInstFunc_ "Rank" [addrArg] in
 	(* hEdit: add a new function that marks MPI_rank in non-default comm *)
-	let rankFuncNonDefaultComm1   = mkInstFunc_ "RankNonDefaultComm1" [addrArg] in
+	let rankFuncNonDefaultComm1   = mkInstFunc_ "RankNonDefaultComm1" [addrArg; boolArg] in
 	let rankFuncNonDefaultComm2   = mkInstFunc_ "RankNonDefaultComm2" [valArg; addrArg] in
 	(* hEdit: add a new function that marks MPI_COMM_WORLD's size in MPI_COMM_WORLD *)
 	let worldSizeFunc   = mkInstFunc_ "WorldSizeWithLimit" [addrArg; limitArg] in
@@ -504,12 +504,36 @@ class crestInstrumentVisitor f =
 	let mkHandleReturnFD value = mkInstCall handleReturnFuncFD [toValueFDouble value] in
 
 	let mkRank addr     = mkInstCall_ rankFunc [toAddr addr] in
-	let mkRankNonDefaultComm1 addr     = mkInstCall_ rankFuncNonDefaultComm1 [toAddr addr] in
+	let mkRankNonDefaultComm1 addr b    = mkInstCall_ rankFuncNonDefaultComm1 [toAddr addr; integer b] in
 	let mkRankNonDefaultComm2 value addr     = mkInstCall_ rankFuncNonDefaultComm2 [toValue value; toAddr addr] in
     let mkWorldSize addr limit    = mkInstCall_ worldSizeFunc [toAddr addr; integer limit] in
 	let mkGetMPIInfo ()      = mkInstCall_ getMPIInfo [] in
 
+    
+    let isLvalGlobal lval = 
+        match lval with
+            | (Var v, _) -> 
+                (
+                if v.vglob then
+                    1
+                else 
+                    0
+                )
+            | _ ->
+                0
+    in
 
+(*
+    let rec isExprGlobal expr = 
+        match expr with 
+            | AddrOf a ->
+                isLvalGlobal a
+            | StartOf b ->
+                isLvalGlobal b
+            | _ ->
+                0
+    in
+*)
 
 	let rankMarker g i = 
 		match g with 
@@ -528,7 +552,7 @@ class crestInstrumentVisitor f =
 							| AddrOf(a) ->
 								(* miss the bracket cause the bug for addressOf*)
 								[mkRank (addressOf a); i]; 
-							| _ -> [];
+							| _ -> [i];
 						)
 				)
 			
@@ -539,14 +563,17 @@ class crestInstrumentVisitor f =
 					| k::_ -> 
 						(
 						match k with 
-							| Lval(_, _) ->
-								[mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h k]; 
-							| CastE(_, _) ->
-								[mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h k]; 
-							| AddrOf(a) ->
+							| Lval l ->
+								[mkRankNonDefaultComm1 k 0; i; mkRankNonDefaultComm2 h k]; 
+							| CastE(_, e) ->
+								[mkRankNonDefaultComm1 k 0; i; mkRankNonDefaultComm2 h k]; 
+							| AddrOf a ->
 								(* miss the bracket cause the bug for addressOf*)
-								[mkRankNonDefaultComm1 k; i; mkRankNonDefaultComm2 h (addressOf a)]; 
-							| _ -> [];
+								[mkRankNonDefaultComm1 k (isLvalGlobal a); i; mkRankNonDefaultComm2 h k]; 
+							| StartOf a ->
+								(* miss the bracket cause the bug for addressOf*)
+								[mkRankNonDefaultComm1 k (isLvalGlobal a); i; mkRankNonDefaultComm2 h k]; 
+							| _ -> [i];
 						)
 				)
 			

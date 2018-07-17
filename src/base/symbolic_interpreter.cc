@@ -512,6 +512,11 @@ if (b.expr && b.expr->VarExist(133)) {
 
 		ex_.mutable_path()->Push(kReturnId);
 
+        for (auto s: localSymbols) {
+            mem_.erase(s);    
+        }
+        localSymbols.clear();
+
 //
 // hEdit: temporary solution for a bug occuring when testing susy-hmc
 // 
@@ -745,8 +750,12 @@ if (stack_.size() > 1) {
 	// hEdit: this method takes special care of input variables  
 	// that indicate MPI ranks in MPI_COMM_WORLD
 	//
-	value_t SymbolicInterpreter::NewInputRankNonDefaultComm(type_t type, addr_t addr) {
+	value_t SymbolicInterpreter::NewInputRankNonDefaultComm(type_t type, 
+        addr_t addr, bool isGlobal) {
+
 		IFDEBUG(fprintf(stderr, "symbolic_input %d %lu\n", type, addr));
+
+        if (!isGlobal) localSymbols.insert(addr);
 
 		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));

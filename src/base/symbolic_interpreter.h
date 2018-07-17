@@ -68,7 +68,7 @@ namespace crest {
 			// that indicate MPI ranks (MPI_COMM_WORLD)
 			//
 			value_t NewInputRank(type_t type, addr_t addr);
-			value_t NewInputRankNonDefaultComm(type_t type, addr_t addr);
+			value_t NewInputRankNonDefaultComm(type_t type, addr_t addr, bool isGlobal);
 
 			// 
 			// hEdit: this method takes special care of input variables  
@@ -123,7 +123,10 @@ namespace crest {
 
 			// Memory map.
 			map<addr_t,SymbolicExpr*> mem_;
-			
+
+            // Local symbolic variables
+            set<addr_t> localSymbols;
+            
 			//
 			// hEdit
 			//

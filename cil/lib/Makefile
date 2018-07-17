@@ -17,12 +17,12 @@
 #     MAN3PODS => {  }
 #     NAME => q[cilly]
 #     PL_FILES => {  }
-#     PM => { App/Cilly.pm=>q[$(INST_LIBDIR)/App/Cilly.pm], App/Cilly/CilConfig.pm=>q[$(INST_LIBDIR)/App/Cilly/CilConfig.pm], App/Cilly/TempFile.pm=>q[$(INST_LIBDIR)/App/Cilly/TempFile.pm], App/Cilly/KeptFile.pm=>q[$(INST_LIBDIR)/App/Cilly/KeptFile.pm], App/Cilly/OutputFile.pm=>q[$(INST_LIBDIR)/App/Cilly/OutputFile.pm] }
-#     PREREQ_PM => { File::Spec=>q[0], File::Basename=>q[0], Getopt::Long=>q[0], Data::Dumper=>q[0], File::Temp=>q[0], FindBin=>q[0], Carp=>q[0], File::Copy=>q[0], Text::ParseWords=>q[0] }
+#     PM => { App/Cilly.pm=>q[$(INST_LIBDIR)/App/Cilly.pm], App/Cilly/OutputFile.pm=>q[$(INST_LIBDIR)/App/Cilly/OutputFile.pm], App/Cilly/TempFile.pm=>q[$(INST_LIBDIR)/App/Cilly/TempFile.pm], App/Cilly/KeptFile.pm=>q[$(INST_LIBDIR)/App/Cilly/KeptFile.pm], App/Cilly/CilConfig.pm=>q[$(INST_LIBDIR)/App/Cilly/CilConfig.pm] }
+#     PREREQ_PM => { File::Spec=>q[0], Getopt::Long=>q[0], Carp=>q[0], File::Basename=>q[0], File::Temp=>q[0], Data::Dumper=>q[0], File::Copy=>q[0], Text::ParseWords=>q[0], FindBin=>q[0] }
 #     TEST_REQUIRES => {  }
 #     VERSION_FROM => q[App/Cilly.pm]
 #     clean => { FILES=>q[] }
-#     dist => { COMPRESS=>q[gzip -9f], SUFFIX=>q[gz] }
+#     dist => { SUFFIX=>q[gz], COMPRESS=>q[gzip -9f] }
 
 # --- MakeMaker post_initialize section:
 
@@ -195,14 +195,14 @@ TO_INST_PM = App/Cilly.pm \
 
 PM_TO_BLIB = App/Cilly.pm \
 	$(INST_LIBDIR)/App/Cilly.pm \
-	App/Cilly/CilConfig.pm \
-	$(INST_LIBDIR)/App/Cilly/CilConfig.pm \
+	App/Cilly/OutputFile.pm \
+	$(INST_LIBDIR)/App/Cilly/OutputFile.pm \
 	App/Cilly/TempFile.pm \
 	$(INST_LIBDIR)/App/Cilly/TempFile.pm \
 	App/Cilly/KeptFile.pm \
 	$(INST_LIBDIR)/App/Cilly/KeptFile.pm \
-	App/Cilly/OutputFile.pm \
-	$(INST_LIBDIR)/App/Cilly/OutputFile.pm
+	App/Cilly/CilConfig.pm \
+	$(INST_LIBDIR)/App/Cilly/CilConfig.pm
 
 
 # --- MakeMaker platform_constants section:
@@ -468,22 +468,22 @@ clean_subdirs :
 
 clean :: clean_subdirs
 	- $(RM_F) \
-	  core.[0-9][0-9][0-9][0-9] $(INST_ARCHAUTODIR)/extralibs.ld \
-	  $(MAKE_APERL_FILE) lib$(BASEEXT).def \
-	  core.[0-9][0-9][0-9][0-9][0-9] core.*perl.*.? \
-	  pm_to_blib core.[0-9] \
-	  core $(BASEEXT).x \
-	  blibdirs.ts $(BOOTSTRAP) \
-	  $(BASEEXT).exp mon.out \
-	  $(INST_ARCHAUTODIR)/extralibs.all *$(OBJ_EXT) \
-	  pm_to_blib.ts *perl.core \
-	  tmon.out $(BASEEXT).bso \
-	  perl$(EXE_EXT) core.[0-9][0-9][0-9] \
-	  $(BASEEXT).def perl.exe \
-	  MYMETA.json MYMETA.yml \
-	  *$(LIB_EXT) so_locations \
-	  core.[0-9][0-9] perlmain.c \
-	  perl 
+	  *perl.core perl \
+	  $(INST_ARCHAUTODIR)/extralibs.all $(BASEEXT).def \
+	  blibdirs.ts *$(OBJ_EXT) \
+	  so_locations $(BASEEXT).exp \
+	  core.[0-9][0-9] mon.out \
+	  core pm_to_blib.ts \
+	  perlmain.c $(MAKE_APERL_FILE) \
+	  MYMETA.json tmon.out \
+	  perl.exe $(BOOTSTRAP) \
+	  perl$(EXE_EXT) core.[0-9][0-9][0-9][0-9][0-9] \
+	  *$(LIB_EXT) $(INST_ARCHAUTODIR)/extralibs.ld \
+	  lib$(BASEEXT).def $(BASEEXT).bso \
+	  core.[0-9] pm_to_blib \
+	  core.*perl.*.? $(BASEEXT).x \
+	  core.[0-9][0-9][0-9] MYMETA.yml \
+	  core.[0-9][0-9][0-9][0-9] 
 	- $(RM_RF) \
 	  blib 
 	- $(MV) $(FIRST_MAKEFILE) $(MAKEFILE_OLD) $(DEV_NULL)
@@ -498,7 +498,7 @@ realclean_subdirs :
 # Delete temporary files (via clean) and also delete dist files
 realclean purge ::  clean realclean_subdirs
 	- $(RM_F) \
-	  $(MAKEFILE_OLD) $(FIRST_MAKEFILE) 
+	  $(FIRST_MAKEFILE) $(MAKEFILE_OLD) 
 	- $(RM_RF) \
 	  $(DISTVNAME) 
 
@@ -882,10 +882,10 @@ ppd :
 pm_to_blib : $(FIRST_MAKEFILE) $(TO_INST_PM)
 	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', q[$(PM_FILTER)], '\''$(PERM_DIR)'\'')' -- \
 	  App/Cilly.pm $(INST_LIBDIR)/App/Cilly.pm \
-	  App/Cilly/CilConfig.pm $(INST_LIBDIR)/App/Cilly/CilConfig.pm \
+	  App/Cilly/OutputFile.pm $(INST_LIBDIR)/App/Cilly/OutputFile.pm \
 	  App/Cilly/TempFile.pm $(INST_LIBDIR)/App/Cilly/TempFile.pm \
 	  App/Cilly/KeptFile.pm $(INST_LIBDIR)/App/Cilly/KeptFile.pm \
-	  App/Cilly/OutputFile.pm $(INST_LIBDIR)/App/Cilly/OutputFile.pm 
+	  App/Cilly/CilConfig.pm $(INST_LIBDIR)/App/Cilly/CilConfig.pm 
 	$(NOECHO) $(TOUCH) pm_to_blib
 
 

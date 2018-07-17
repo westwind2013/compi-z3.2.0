@@ -337,9 +337,10 @@ void __CrestRank(int* x) {
 // hEdit: symbolic input function used to mark MPI rank in communicators
 // other than the default MPI_COMM_WORLD
 // 
-void __CrestRankNonDefaultComm1(int* x) {
+void __CrestRankNonDefaultComm1(int* x, __CREST_BOOL b) {
     pre_symbolic = 0;
-    *x = (int)SI->NewInputRankNonDefaultComm(types::U_INT, (addr_t)x);
+    *x = (int)SI->NewInputRankNonDefaultComm(types::U_INT, (addr_t)x, 
+        static_cast<bool>(b));
 }
 
 // 

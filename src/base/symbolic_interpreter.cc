@@ -157,59 +157,29 @@ namespace crest {
 
         if (it != mem_.end()) {
 
-if (it->second && it->second->VarExist(133))
-{
+/*
+if (it->second && it->second->VarExist(133)) {
     fprintf(stderr, "Load ID: %d, Addr: %p, Val: %d\n", id, addr, value);
     it->second->Print();
 
     hongbo.insert(addr);
 }
+*/
 
             if (!it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
-/*                if (id == 13567 || id == 13568) {
-                    fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
-                    stack_.back().expr->Print();
-                }
-*/
             } else {
                 //mem_.erase(it);
                 SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
                 pExpr->FD2INT();
                 PushSymbolic(pExpr, value);
-                
-                //PushConcrete(value);
-/*                if (id == 13567 || id == 13568) {
-                    fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
-                    stack_.back().expr->Print();
-                }
-*/            
             }
         } else {
             PushConcrete(value);
-/*            if (id == 13567 || id == 13568) {
-                fprintf(stderr, "%d, conc2\n", stack_.size());
-            }
-*/        
         }
         fflush(stderr);
-/*
-        if (it == mem_.end()) {
-			PushConcrete(value);
-if (id == 14856 || id == 14857) {
-    fprintf(stderr, "%d, conc\n", stack_.size());
-    stack_.back().expr->Print();
-}
-		} else {
-			PushSymbolic(new SymbolicExpr(*it->second), value);
-if (id == 14856 || id == 14857) {
-    fprintf(stderr, "%d, symb\n", stack_.size());
-    stack_.back().expr->Print();
-}
-        }
-*/
-
-		ClearPredicateRegister();
+		
+        ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
 
@@ -218,49 +188,31 @@ if (id == 14856 || id == 14857) {
 		
         ConstMemIt it = mem_.find(addr);
 
-if (it->second && it->second->VarExist(133))
-{
+/*
+if (it->second && it->second->VarExist(133)) {
     fprintf(stderr, "LoadFD ID: %d, Addr: %p, Val: %d\n", id, addr, value);
     it->second->Print(); 
     
     hongbo.insert(addr);
 }
+*/
 
         if (it != mem_.end()) {
             if (it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
                 if (it->second->VarExist(133) ) it->second->Print();
-/*                if (id == 13567 || id == 13568) {
-                    fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
-                    stack_.back().expr->Print();
-                }
-*/            } else {
+            } else {
                 //mem_.erase(it);
                 SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
                 pExpr->syncFD();
                 PushSymbolic(pExpr, value);
                 if (it->second->VarExist(133) ) it->second->Print();
-                
-                //PushConcrete(value);
-/*                if (id == 13567 || id == 13568) {
-                    fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
-                    stack_.back().expr->Print();
-                }
-*/            }
+            }
         } else {
             PushConcrete(value);
-/*            if (id == 13567 || id == 13568) {
-                fprintf(stderr, "%d, conc2\n", stack_.size());
-            }
-*/        
         }
-/*		if (it == mem_.end()) {
-			PushConcrete(value);
-		} else {
-			PushSymbolic(new SymbolicExpr(*it->second), value);
-		}
-*/
-		ClearPredicateRegister();
+		
+        ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
 	
@@ -287,19 +239,21 @@ if (it->second && it->second->VarExist(133))
                     }
                 }
 			} else {
-				if (hongbo.find(addr) != hongbo.end() )
+/*				if (hongbo.find(addr) != hongbo.end() )
                     fprintf(stderr, "Store: ID %d, Addr %p "
                     "removed from symbolic "
                     "memory (1)\n", id, addr);
+*/               
                 mem_.erase(addr);
 				delete se.expr;
 			}
 		} else {
-            if (hongbo.find(addr) != hongbo.end() )
+/*            if (hongbo.find(addr) != hongbo.end() )
                 fprintf(stderr, "Store: ID %d, Addr %p "
                 "removed from symbolic "
                 "memory (2)\n", id, addr);
-			mem_.erase(addr);
+*/			
+            mem_.erase(addr);
 		}
 
 		stack_.pop_back();
@@ -312,9 +266,6 @@ if (it->second && it->second->VarExist(133))
 		
         assert(stack_.size() >= 1);
 		StackElem& se = stack_.back();
-
-//bool tag = false;
-//if (se.expr->VarExist(133) ) tag = true;
 
 		if (se.expr) {
 			switch (op) {
@@ -329,10 +280,6 @@ if (it->second && it->second->VarExist(133))
 					}
 					// Otherwise, fall through to the concrete case.
 				default:
-//if (tag) {
-//    fprintf(stderr, "UNARY:  id: %d, value: %d", id, value);    
-//    se.expr->Print();
-//}
 					// Concrete operator.
 					delete se.expr;
 
@@ -357,26 +304,6 @@ if (it->second && it->second->VarExist(133))
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
 
-/*
-bool tag = false;
-if (a.expr && a.expr->VarExist(133)) {
-    fprintf(stderr, "Binary 1: id: %d, a.expr", id);
-    a.expr->Print();
-    tag = true;
-
-    if (b.expr) b.expr->Print();
-    else fprintf(stderr, "%d, %f\n", b.concrete, b.concreteFD);
-}
-if (b.expr && b.expr->VarExist(133)) {
-    fprintf(stderr, "Binary 1: id: %d, b.expr", id);
-    b.expr->Print();
-    tag = true;
-
-    if (a.expr) a.expr->Print();
-    else fprintf(stderr, "%d, %f\n", a.concrete, a.concreteFD);
-}
-*/
-
 		if (a.expr || b.expr) {
 			switch (op) {
 				case ops::ADD:
@@ -385,10 +312,6 @@ if (b.expr && b.expr->VarExist(133)) {
 						*a.expr += b.concrete;
 					} else if (b.expr == NULL) {
 						*a.expr += b.concrete;
-/*if (tag) {
-    fprintf(stderr, "add\n");
-    a.expr->Print(); 
-}*/
 					} else {
 						*a.expr += *b.expr;
 						delete b.expr;
@@ -402,10 +325,6 @@ if (b.expr && b.expr->VarExist(133)) {
 						*a.expr += b.concrete;
 					} else if (b.expr == NULL) {
 						*a.expr -= b.concrete;
-/*if (tag) {
-    fprintf(stderr, "sub\n");
-    a.expr->Print(); 
-} */
 					} else {
 						*a.expr -= *b.expr;
 						delete b.expr;
@@ -416,10 +335,6 @@ if (b.expr && b.expr->VarExist(133)) {
 					if (a.expr != NULL) {
 						// Convert to multiplication by a (concrete) constant.
 						*a.expr *= (1LL << b.concrete);
-/*if (tag) {
-    fprintf(stderr, "shl\n");
-    a.expr->Print(); 
-} */
 					}
 					delete b.expr;
 					break;
@@ -430,10 +345,6 @@ if (b.expr && b.expr->VarExist(133)) {
 						*a.expr *= b.concrete;
 					} else if (b.expr == NULL) {
 						*a.expr *= b.concrete;
-/*if (tag) {
-    fprintf(stderr, "mul\n");
-    a.expr->Print(); 
-}*/
 					} else {
 						swap(a, b);
 						*a.expr *= b.concrete;
@@ -448,10 +359,7 @@ if (b.expr && b.expr->VarExist(133)) {
 					a.expr = NULL;
 			}
 		}
-
-/*if (tag && !a.expr) {
-    fprintf(stderr, "Destroyed\n\n");
-}*/
+        
         // 
         // hEdit: not a float
         //
@@ -468,8 +376,6 @@ if (b.expr && b.expr->VarExist(133)) {
 			value_double_t value) {
 		IFDEBUG(fprintf(stderr, "apply2 %d %lf\n", op, value));
 
-//fprintf(stderr, "value = %lf\n", value);
-
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
@@ -485,22 +391,6 @@ if (b.expr && b.expr->VarExist(133)) {
     fprintf(stderr, "Binary 2: id: %d, b.expr", id);
     b.expr->Print();
     tag = true;
-}
-*/
-/*
-if (a.expr) {
-    string s;
-    a.expr->AppendToString(&s);
-    fprintf(stderr, "Expr: %s\n", s.c_str());
-} else {
-    fprintf(stderr, "Null expression!\n");
-}
-if (b.expr) {
-    string s;
-    b.expr->AppendToString(&s);
-    fprintf(stderr, "Expr: %s\n", s.c_str());
-} else {
-    fprintf(stderr, "Null expression!\n");
 }
 */
 		if (a.expr || b.expr) {
@@ -560,21 +450,9 @@ if (b.expr) {
 			}
 		}
         
-/*if (tag && !a.expr) {
-    fprintf(stderr, "Destroyed\n\n");
-}*/
         a.isFloat = true;
 		a.concreteFD = value;
 
-/*
-if (a.expr) {
-    string s;
-    a.expr->AppendToString(&s);
-    fprintf(stderr, "Expr: %s\n", s.c_str());
-} else {
-    fprintf(stderr, "Null expression!\n");
-}
-*/		
         stack_.pop_back();
 		ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
@@ -735,7 +613,6 @@ if (stack_.size() > 1) {
         value_t ret = 0;
         if (num_inputs_ < ex_.inputs().size()) {
             ret = CastTo(static_cast<value_t>(ex_.inputs()[num_inputs_]), type);
-//fprintf(stderr, "ret: %d, %ld\n", num_inputs_, ret);
         } else {
             //
             // hEdit: get random paramters obtained from the tool
@@ -834,15 +711,15 @@ if (stack_.size() > 1) {
 			ret = CastTo(rank_, type);
 			ex_.mutable_inputs()->push_back(ret);
 
-			//
-                        // hEdit: padd the vecotor *rand_params_* so as to make
-                        // other variables marked as symbolic take the CORRECT
-                        // values from the vector. 
-                        //
-                        //if (num_inputs_ < rand_params_.size())
-			//	rand_params_.insert(rand_params_.begin() + num_inputs_, rank_);
-			//else
-			//	rand_params_.push_back(rank_);
+            //
+            // hEdit: padd the vecotor *rand_params_* so as to make
+            // other variables marked as symbolic take the CORRECT
+            // values from the vector. 
+            //
+            //if (num_inputs_ < rand_params_.size())
+            //	rand_params_.insert(rand_params_.begin() + num_inputs_, rank_);
+            //else
+            //	rand_params_.push_back(rank_);
 
 		}
 		
@@ -891,16 +768,15 @@ if (num_inputs_ == 133) {
 			ret = CastTo(0, type);
 			ex_.mutable_inputs()->push_back(ret);
 
-			//
-                        // hEdit: padd the vecotor *rand_params_* so as to make
-                        // other variables marked as symbolic take the CORRECT
-                        // values from the vector. 
-                        //
-                        //if (num_inputs_ < rand_params_.size())
-			//	rand_params_.insert(rand_params_.begin() + num_inputs_, rank_);
-			//else
-			//	rand_params_.push_back(rank_);
-
+            //
+            // hEdit: padd the vecotor *rand_params_* so as to make
+            // other variables marked as symbolic take the CORRECT
+            // values from the vector. 
+            //
+            //if (num_inputs_ < rand_params_.size())
+            //	rand_params_.insert(rand_params_.begin() + num_inputs_, rank_);
+            //else
+            //	rand_params_.push_back(rank_);
 
 		}
 		
@@ -910,7 +786,6 @@ if (num_inputs_ == 133) {
 		//
 		if (target_rank_ == rank_) { 
 			ex_.rank_non_default_comm_indices_.push_back(num_inputs_);
-//fprintf(stderr, "non_default: %d\n", num_inputs_);
 		}
 
 		num_inputs_++;
@@ -941,17 +816,17 @@ if (num_inputs_ == 133) {
 			ex_.mutable_inputs()->push_back(ret);
 			//std::cout << "debug: world_size" << ret 
 			//	<< " : target_rank " << target_rank_ 
-			//	<< " : rank " << rank_ << std::endl;
- 			
-			//
-                        // hEdit: padd the vecotor *rand_params_* so as to make
-                        // other variables marked as symbolic take the CORRECT
-                        // values from the vector. 
-                        //
-                        //if (num_inputs_ < rand_params_.size())
-			//	rand_params_.insert(rand_params_.begin() + num_inputs_, world_size_);
-			//else 
-			//	rand_params_.push_back(world_size_);
+            //	<< " : rank " << rank_ << std::endl;
+
+            //
+            // hEdit: padd the vecotor *rand_params_* so as to make
+            // other variables marked as symbolic take the CORRECT
+            // values from the vector. 
+            //
+            //if (num_inputs_ < rand_params_.size())
+            //	rand_params_.insert(rand_params_.begin() + num_inputs_, world_size_);
+            //else 
+            //	rand_params_.push_back(world_size_);
 		}
 
 		//

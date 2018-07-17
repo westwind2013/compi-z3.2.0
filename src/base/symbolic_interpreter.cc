@@ -46,6 +46,8 @@ using std::vector;
 
 namespace crest {
 
+    set<addr_t> hongbo;
+
 	typedef map<addr_t, SymbolicExpr*>::const_iterator ConstMemIt;
 
 	SymbolicInterpreter::SymbolicInterpreter() :
@@ -151,18 +153,25 @@ namespace crest {
 	void SymbolicInterpreter::Load(id_t id, addr_t addr, value_t value) {
 		IFDEBUG(fprintf(stderr, "load %lu %lld\n", addr, value));
 	
-//if (id == 14856 || id == 14857) fprintf(stderr, "ADDR: %d, 0x%x\n", id, addr);
-
         ConstMemIt it = mem_.find(addr);
 
         if (it != mem_.end()) {
+
+if (it->second && it->second->VarExist(133))
+{
+    fprintf(stderr, "Load ID: %d, Addr: %p, Val: %d\n", id, addr, value);
+    it->second->Print();
+
+    hongbo.insert(addr);
+}
+
             if (!it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
-                if (id == 13567 || id == 13568) {
+/*                if (id == 13567 || id == 13568) {
                     fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
                     stack_.back().expr->Print();
                 }
-
+*/
             } else {
                 //mem_.erase(it);
                 SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
@@ -170,18 +179,18 @@ namespace crest {
                 PushSymbolic(pExpr, value);
                 
                 //PushConcrete(value);
-                if (id == 13567 || id == 13568) {
+/*                if (id == 13567 || id == 13568) {
                     fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
                     stack_.back().expr->Print();
                 }
-            
+*/            
             }
         } else {
             PushConcrete(value);
-            if (id == 13567 || id == 13568) {
+/*            if (id == 13567 || id == 13568) {
                 fprintf(stderr, "%d, conc2\n", stack_.size());
             }
-        
+*/        
         }
         fflush(stderr);
 /*
@@ -208,31 +217,42 @@ if (id == 14856 || id == 14857) {
 		IFDEBUG(fprintf(stderr, "load %lu %lf\n", addr, value));
 		
         ConstMemIt it = mem_.find(addr);
+
+if (it->second && it->second->VarExist(133))
+{
+    fprintf(stderr, "LoadFD ID: %d, Addr: %p, Val: %d\n", id, addr, value);
+    it->second->Print(); 
+    
+    hongbo.insert(addr);
+}
+
         if (it != mem_.end()) {
             if (it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
-                if (id == 13567 || id == 13568) {
+                if (it->second->VarExist(133) ) it->second->Print();
+/*                if (id == 13567 || id == 13568) {
                     fprintf(stderr, "%d, symb, val: %ld\n", stack_.size(), value);
                     stack_.back().expr->Print();
                 }
-            } else {
+*/            } else {
                 //mem_.erase(it);
                 SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
                 pExpr->syncFD();
                 PushSymbolic(pExpr, value);
+                if (it->second->VarExist(133) ) it->second->Print();
                 
                 //PushConcrete(value);
-                if (id == 13567 || id == 13568) {
+/*                if (id == 13567 || id == 13568) {
                     fprintf(stderr, "%d, conc1, val: %ld\n", stack_.size(), value);
                     stack_.back().expr->Print();
                 }
-            }
+*/            }
         } else {
             PushConcrete(value);
-            if (id == 13567 || id == 13568) {
+/*            if (id == 13567 || id == 13568) {
                 fprintf(stderr, "%d, conc2\n", stack_.size());
             }
-        
+*/        
         }
 /*		if (it == mem_.end()) {
 			PushConcrete(value);
@@ -267,10 +287,18 @@ if (id == 14856 || id == 14857) {
                     }
                 }
 			} else {
-				mem_.erase(addr);
+				if (hongbo.find(addr) != hongbo.end() )
+                    fprintf(stderr, "Store: ID %d, Addr %p "
+                    "removed from symbolic "
+                    "memory (1)\n", id, addr);
+                mem_.erase(addr);
 				delete se.expr;
 			}
 		} else {
+            if (hongbo.find(addr) != hongbo.end() )
+                fprintf(stderr, "Store: ID %d, Addr %p "
+                "removed from symbolic "
+                "memory (2)\n", id, addr);
 			mem_.erase(addr);
 		}
 
@@ -285,6 +313,9 @@ if (id == 14856 || id == 14857) {
         assert(stack_.size() >= 1);
 		StackElem& se = stack_.back();
 
+//bool tag = false;
+//if (se.expr->VarExist(133) ) tag = true;
+
 		if (se.expr) {
 			switch (op) {
 				case ops::NEGATE:
@@ -298,6 +329,10 @@ if (id == 14856 || id == 14857) {
 					}
 					// Otherwise, fall through to the concrete case.
 				default:
+//if (tag) {
+//    fprintf(stderr, "UNARY:  id: %d, value: %d", id, value);    
+//    se.expr->Print();
+//}
 					// Concrete operator.
 					delete se.expr;
 
@@ -321,7 +356,26 @@ if (id == 14856 || id == 14857) {
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
-        
+
+/*
+bool tag = false;
+if (a.expr && a.expr->VarExist(133)) {
+    fprintf(stderr, "Binary 1: id: %d, a.expr", id);
+    a.expr->Print();
+    tag = true;
+
+    if (b.expr) b.expr->Print();
+    else fprintf(stderr, "%d, %f\n", b.concrete, b.concreteFD);
+}
+if (b.expr && b.expr->VarExist(133)) {
+    fprintf(stderr, "Binary 1: id: %d, b.expr", id);
+    b.expr->Print();
+    tag = true;
+
+    if (a.expr) a.expr->Print();
+    else fprintf(stderr, "%d, %f\n", a.concrete, a.concreteFD);
+}
+*/
 
 		if (a.expr || b.expr) {
 			switch (op) {
@@ -331,6 +385,10 @@ if (id == 14856 || id == 14857) {
 						*a.expr += b.concrete;
 					} else if (b.expr == NULL) {
 						*a.expr += b.concrete;
+/*if (tag) {
+    fprintf(stderr, "add\n");
+    a.expr->Print(); 
+}*/
 					} else {
 						*a.expr += *b.expr;
 						delete b.expr;
@@ -344,6 +402,10 @@ if (id == 14856 || id == 14857) {
 						*a.expr += b.concrete;
 					} else if (b.expr == NULL) {
 						*a.expr -= b.concrete;
+/*if (tag) {
+    fprintf(stderr, "sub\n");
+    a.expr->Print(); 
+} */
 					} else {
 						*a.expr -= *b.expr;
 						delete b.expr;
@@ -354,6 +416,10 @@ if (id == 14856 || id == 14857) {
 					if (a.expr != NULL) {
 						// Convert to multiplication by a (concrete) constant.
 						*a.expr *= (1LL << b.concrete);
+/*if (tag) {
+    fprintf(stderr, "shl\n");
+    a.expr->Print(); 
+} */
 					}
 					delete b.expr;
 					break;
@@ -364,6 +430,10 @@ if (id == 14856 || id == 14857) {
 						*a.expr *= b.concrete;
 					} else if (b.expr == NULL) {
 						*a.expr *= b.concrete;
+/*if (tag) {
+    fprintf(stderr, "mul\n");
+    a.expr->Print(); 
+}*/
 					} else {
 						swap(a, b);
 						*a.expr *= b.concrete;
@@ -379,6 +449,9 @@ if (id == 14856 || id == 14857) {
 			}
 		}
 
+/*if (tag && !a.expr) {
+    fprintf(stderr, "Destroyed\n\n");
+}*/
         // 
         // hEdit: not a float
         //
@@ -400,6 +473,20 @@ if (id == 14856 || id == 14857) {
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
+
+/*
+bool tag = false;
+if (a.expr && a.expr->VarExist(133)) {
+    fprintf(stderr, "Binary 2: id: %d, a.expr", id);
+    a.expr->Print();
+    tag = true;
+}
+if (b.expr && b.expr->VarExist(133)) {
+    fprintf(stderr, "Binary 2: id: %d, b.expr", id);
+    b.expr->Print();
+    tag = true;
+}
+*/
 /*
 if (a.expr) {
     string s;
@@ -473,6 +560,9 @@ if (b.expr) {
 			}
 		}
         
+/*if (tag && !a.expr) {
+    fprintf(stderr, "Destroyed\n\n");
+}*/
         a.isFloat = true;
 		a.concreteFD = value;
 
@@ -784,6 +874,11 @@ if (stack_.size() > 1) {
 		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
 
+if (num_inputs_ == 133) {
+    hongbo.insert(addr);
+    fprintf(stderr, "Appear on the symbolic memory: %p\n", addr);
+    mem_[addr]->Print();    
+}
 
 		value_t ret = 0;
 		if (num_inputs_ < ex_.inputs().size()) {

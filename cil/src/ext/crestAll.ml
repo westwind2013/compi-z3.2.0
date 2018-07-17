@@ -257,7 +257,10 @@ let idType   = intType
 let bidType  = intType
 let fidType  = uintType
 let valType  = TInt (ILongLong, [])
+(*
 let addrType = TInt (IULong, [])
+*)
+let addrType = TInt (IULongLong, [])
 let boolType = TInt (IUChar, [])
 let opType   = intType  (* enum *)
 (* Add following data types for floating point support*)

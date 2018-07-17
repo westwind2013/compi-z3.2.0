@@ -24,7 +24,7 @@ namespace crest {
 	typedef unsigned int function_id_t;
 	typedef unsigned int var_t;
 	typedef long long int value_t;
-	typedef unsigned long int addr_t;
+	typedef unsigned long long int addr_t;
 
     //
     // hEdit: Supporting the floating point data type

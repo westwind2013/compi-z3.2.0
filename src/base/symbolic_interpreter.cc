@@ -155,6 +155,12 @@ namespace crest {
 	
         ConstMemIt it = mem_.find(addr);
 
+bool tag = false;
+if (id == 14856 || id == 14857) {
+    fprintf(stderr, "Load: %d, %p, %d\n", id, addr, value);    
+    tag = true;
+}
+
         if (it != mem_.end()) {
 
 /*
@@ -178,7 +184,13 @@ if (it->second && it->second->VarExist(133)) {
             PushConcrete(value);
         }
         fflush(stderr);
-		
+
+if (tag) {
+    StackElem &s = stack_.back();
+    if (s.expr) s.expr->Print();
+    else fprintf(stderr, "empty\n");
+}
+
         ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}

@@ -155,11 +155,13 @@ namespace crest {
 	
         ConstMemIt it = mem_.find(addr);
 
+/*
 bool tag = false;
 if (id == 14856 || id == 14857) {
     fprintf(stderr, "Load: %d, %p, %d\n", id, addr, value);    
     tag = true;
 }
+*/
 
         if (it != mem_.end()) {
 
@@ -175,22 +177,24 @@ if (it->second && it->second->VarExist(133)) {
             if (!it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
             } else {
-                //mem_.erase(it);
-                SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
-                pExpr->FD2INT();
-                PushSymbolic(pExpr, value);
+                mem_.erase(it);
+                PushConcrete(value);
+                
+                //SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
+                //pExpr->FD2INT();
+                //PushSymbolic(pExpr, value);
             }
         } else {
             PushConcrete(value);
         }
         fflush(stderr);
-
+/*
 if (tag) {
     StackElem &s = stack_.back();
     if (s.expr) s.expr->Print();
     else fprintf(stderr, "empty\n");
 }
-
+*/
         ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
@@ -212,13 +216,13 @@ if (it->second && it->second->VarExist(133)) {
         if (it != mem_.end()) {
             if (it->second->IsFloat() ) {
                 PushSymbolic(new SymbolicExpr(*it->second), value);
-                if (it->second->VarExist(133) ) it->second->Print();
+                //if (it->second->VarExist(133) ) it->second->Print();
             } else {
                 //mem_.erase(it);
                 SymbolicExpr* pExpr = new SymbolicExpr(*it->second);
                 pExpr->syncFD();
                 PushSymbolic(pExpr, value);
-                if (it->second->VarExist(133) ) it->second->Print();
+                //if (it->second->VarExist(133) ) it->second->Print();
             }
         } else {
             PushConcrete(value);
@@ -244,10 +248,10 @@ if (it->second && it->second->VarExist(133)) {
                     if (!se.expr->IsFloat() ) {
                         mem_[addr] = se.expr;
                     } else {
-                        se.expr->FD2INT();
-                        mem_[addr] = se.expr;
-                        //mem_.erase(addr);
-                        //delete se.expr;
+                        //se.expr->FD2INT();
+                        //mem_[addr] = se.expr;
+                        mem_.erase(addr);
+                        delete se.expr;
                     }
                 }
 			} else {
@@ -771,12 +775,13 @@ if (stack_.size() > 1) {
 
 		mem_[addr] = new SymbolicExpr(1LL, num_inputs_);
 		ex_.mutable_vars()->insert(make_pair(num_inputs_, type));
-
-if (num_inputs_ == 133) {
+/*
+if (num_inputs_ == 130) {
     hongbo.insert(addr);
     fprintf(stderr, "Appear on the symbolic memory: %p\n", addr);
     mem_[addr]->Print();    
 }
+*/
 
 		value_t ret = 0;
 		if (num_inputs_ < ex_.inputs().size()) {

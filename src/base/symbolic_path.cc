@@ -54,8 +54,8 @@ namespace crest {
                 constraints_.push_back(constraint);
                 constraints_idx_.push_back(branches_.size());
                 
-                fprintf(stderr, "bid: %d  +  ", bid);
-                constraint->Print();
+//                fprintf(stderr, "bid: %d  +  ", bid);
+//                constraint->Print();
             }
         }
 

@@ -106,6 +106,10 @@ namespace crest {
     }
 
 
+    int SymbolicExpr::GetCountOfTerms() {
+        return isFloat? coeff_FD_.size(): coeff_.size(); 
+    }
+
 	//
 	// hComment: find the set of marked variables without redundancy
 	//
@@ -467,10 +471,26 @@ namespace crest {
     bool SymbolicExpr::operator==(const SymbolicExpr& e) const {
 //if(isFloat) fprintf(stderr, "isFloat: true\n\n");
 //else fprintf(stderr, "isFloat: false\n\n");
-        return isFloat? 
+        if (!isFloat && !e.isFloat) {
+            return ((const_ == e.const_) && (coeff_ == e.coeff_)); 
+        } else {
+            if (!isFloat) syncFD();
+            if (!e.IsFloat() ) syncFD();
+            if (GetCountOfTerms() != e.GetCountOfTerms() ) return false;
+            else {
+                for(ConstIt i = coeff_.begin(); i != coeff_.end(); i++) {
+                    if (coeff_FD_.find(i->first) == coeff_FD_.end()) return false;
+                    else if (fabs(i->second - coeff_FD_[i->first]) >= EPSILON) return false;
+                }
+            }
+        }
+        
+        return true;
+/*        return isFloat? 
             ((fabs(const_ - e.const_) < EPSILON) && 
                 (coeff_FD_ == e.coeff_FD_)) :
             ((const_ == e.const_) && (coeff_ == e.coeff_));
-	}
+*/	
+    }
 
 }  // namespace crest

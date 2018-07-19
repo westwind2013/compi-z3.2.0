@@ -60,7 +60,7 @@ namespace crest {
 
             void FD2INT();
             void syncFD();
-
+            int GetCountOfTerms(); 
             // hDel: redundant code
             /*
             size_t Size() const {

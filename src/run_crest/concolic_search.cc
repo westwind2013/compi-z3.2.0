@@ -695,7 +695,8 @@ DFS(i+1, cur_ex);
 
 			// We successfully solved the branch, recurse.
 			depth--;
-			DFS(i + 1, depth, cur_ex);
+
+            DFS(i + 1, depth, cur_ex);
 		}
 	}
 

@@ -203,13 +203,11 @@ if (tag) {
 		IFDEBUG(fprintf(stderr, "load %lu %lf\n", addr, value));
 		
         ConstMemIt it = mem_.find(addr);
-
 /*
-if (it->second && it->second->VarExist(133)) {
+bool tag = false;
+if (id == 16084 || id == 16083) {
     fprintf(stderr, "LoadFD ID: %d, Addr: %p, Val: %d\n", id, addr, value);
-    it->second->Print(); 
-    
-    hongbo.insert(addr);
+    tag = true;
 }
 */
 
@@ -227,7 +225,14 @@ if (it->second && it->second->VarExist(133)) {
         } else {
             PushConcrete(value);
         }
-		
+
+/*
+if (tag) {
+    StackElem &s = stack_.back();
+    if (s.expr) s.expr->Print();
+    else fprintf(stderr, "empty\n");
+}
+*/
         ClearPredicateRegister();
 		IFDEBUG(DumpMemory());
 	}
@@ -481,7 +486,14 @@ if (b.expr && b.expr->VarExist(133)) {
         assert(stack_.size() >= 2);
 		StackElem& a = *(stack_.rbegin() + 1);
 		StackElem& b = stack_.back();
-
+/*
+if (id == 16082) {
+    fprintf(stderr, "%d, %d\n", id, value);
+    if (a.expr) a.expr->Print();
+    fprintf(stderr, "%d, %d\n", id, value);
+    if (b.expr) b.expr->Print();
+}
+*/
         if (a.expr || b.expr) {
 			// Symbolically compute "a -= b".
 			if (a.expr == NULL) {

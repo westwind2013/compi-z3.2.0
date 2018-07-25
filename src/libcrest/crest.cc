@@ -305,6 +305,16 @@ void __CrestIntWithLimit(int* x, __CREST_VALUE_DOUBLE limit) {
     *x = (int)SI->NewInputWithLimit(types::INT, (addr_t)x, limit);
 }
 
+void __CrestLong(int* x) {
+    pre_symbolic = 0;
+    *x = (int)SI->NewInput(types::LONG, (addr_t)x);
+}
+
+void __CrestLongWithLimit(int* x, __CREST_VALUE_DOUBLE limit) {
+    pre_symbolic = 0;
+    *x = (int)SI->NewInputWithLimit(types::LONG, (addr_t)x, limit);
+}
+
 void __CrestFloat(float* x) {
     pre_symbolic = 0;
     *x = (float)SI->NewInputFD(types::FLOAT, (addr_t)x);

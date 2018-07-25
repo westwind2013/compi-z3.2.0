@@ -214,6 +214,8 @@ EXTERN void __CrestHandleReturnFD(__CREST_ID, __CREST_VALUE_DOUBLE) __SKIP;
 #define COMPI_short_with_limit(x, limit) __CrestShortWithLimit(&x, limit)
 #define COMPI_int(x) __CrestInt(&x)
 #define COMPI_int_with_limit(x, limit) __CrestIntWithLimit(&x, limit)
+#define COMPI_long(x) __CrestInt(&x)
+#define COMPI_long_with_limit(x, limit) __CrestIntWithLimit(&x, limit)
 #define COMPI_float(x) __CrestFloat(&x)
 #define COMPI_float_with_limit(x, limit) __CrestFloatWithLimit(&x, limit)
 #define COMPI_double(x) __CrestDouble(&x)
@@ -240,6 +242,8 @@ EXTERN void __CrestShort(short* x) __SKIP;
 EXTERN void __CrestShortWithLimit(short* x, __CREST_VALUE_DOUBLE limit) __SKIP;
 EXTERN void __CrestInt(int* x) __SKIP;
 EXTERN void __CrestIntWithLimit(int* x, __CREST_VALUE_DOUBLE limit) __SKIP;
+EXTERN void __CrestLong(int* x) __SKIP;
+EXTERN void __CrestLongWithLimit(int* x, __CREST_VALUE_DOUBLE limit) __SKIP;
 EXTERN void __CrestFloat(float* x) __SKIP;
 EXTERN void __CrestFloatWithLimit(float* x, __CREST_VALUE_DOUBLE limit) __SKIP;
 EXTERN void __CrestDouble(double* x) __SKIP;

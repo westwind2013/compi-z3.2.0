@@ -20,6 +20,11 @@
 #include <utility>
 #include <iostream>
 #include <ctime>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <string>
+#include <cstring>
+#include <unistd.h>
 
 #include "base/z3_solver.h"
 #include "run_crest/concolic_search.h"
@@ -41,6 +46,8 @@ using std::stable_sort;
 long long TIMEOUT_IN_SECONDS = 120;
 
 float solver_time = 0.0;
+
+size_t threshold = 100;
 
 namespace crest {
 
@@ -225,12 +232,130 @@ namespace crest {
 		fclose(f);
 	}
 
-	//
-	// hEdit: pass synchronized inputs to all processes. The 
-	// input is generated randomly for the first run, and 
-	// then it is obtained from the TESTED process in later runs.
-	//
+
+    //
+    // hEdit: pass synchronized inputs to all processes. The 
+    // input is generated randomly for the first run, and 
+    // then it is obtained from the TESTED process in later runs.
+    //
     void Search::LaunchProgram(const vector<value_double_t>& inputs) {
+
+        string program_clean = program_ + "_c";
+        string command;
+
+        // Fix the focus in the first threshold tests  
+        if (!world_size_indices_.empty() &&
+                inputs[*world_size_indices_.begin()] <= 16) {
+            // determine the size of MPI_COMM_WORLD
+            comm_world_size_ = inputs[*world_size_indices_.begin()];
+        }
+        if (num_iters_ > threshold && !rank_indices_.empty()) {
+            // determine which MPI rank to be tested
+            target_rank_ = inputs[*rank_indices_.begin()];
+        }
+        if(target_rank_ >= comm_world_size_) target_rank_ = 0;
+
+        if (!is_first_run) WriteInputToFileOrDie("input", inputs);
+
+
+        // assemble the command together
+        char* command2[20];
+        int i = 0;
+
+        command2[i++] = "/usr/bin/mpirun";
+        if (0 != target_rank_) {
+            command2[i++] = "-np";
+            command2[i++] = const_cast<char *> (
+                    (std::to_string((long long)target_rank_)).c_str());
+            command2[i++] = const_cast<char *> (program_clean.c_str());
+            command2[i++] = ":";
+
+            command2[i++] = "-np";
+            command2[i++] = "1";
+            command2[i++] = const_cast<char *> (program_.c_str());
+            if (target_rank_ + 1 < comm_world_size_) {
+
+                command2[i++] = ":";
+                command2[i++] = "-np";
+                command2[i++] = const_cast<char *> (
+                        (std::to_string((long long)comm_world_size_
+                                        - target_rank_ - 1)).c_str());
+                command2[i++] = const_cast<char *> (program_clean.c_str());
+            }
+        } else {
+            command2[i++] = "-np";
+            command2[i++] = "1";
+            command2[i++] = const_cast<char *> (program_.c_str());
+            command2[i++] = ":";
+
+            command2[i++] = "-np";
+            command2[i++] = const_cast<char *> (
+                    (std::to_string((long long)comm_world_size_
+                                    - 1)).c_str());
+            command2[i++] = const_cast<char *> (program_clean.c_str());
+        }
+        command2[i++] = NULL;
+
+        std::ofstream outfile(".target_rank");
+        outfile << target_rank_;
+        outfile.close();
+
+        for (int j = 0; j < i; j++) {
+            fprintf(stderr, "%s ", command2[j]);
+        }
+        fprintf(stderr, "\n");
+
+        int ret = 0;
+        int id = fork();
+        if (id < 0){
+            fprintf(stderr, "failed to fork\n");
+        } else if (id == 0) {
+            fprintf(stderr, "Child\n");
+            execv(command2[0], command2);
+            exit(0);
+        } else {
+            int pid, status;
+            bool time_over = false;
+            time_t begin = time(NULL);
+            while(waitpid(id, &status, WNOHANG) != -1) {
+                if (time(NULL) - begin > TIMEOUT_IN_SECONDS) {
+                    kill (id, 9);
+                    time_over = true;
+                }
+            }
+            if (time_over) {
+                fprintf(stderr, "TIMEOUT: KILLED (%d)\n",
+                        time(NULL) - begin);
+                ret = -1;
+                waitpid(id, &status, 0);
+            } else if (WIFSIGNALED(status) != 0) {
+                ret = -2;
+            } else if (WIFEXITED(status) != 0) {
+                ret = WEXITSTATUS(status);
+            } else {
+                ret = -3;
+            }
+
+            fprintf(stderr, "Parent\n");
+        }
+        // if the command is terminated by the specified timeout
+        if (0 != ret) {
+            // log the triggered input 
+            outfile_illegal_inputs << num_iters_ <<
+                "Return value" << ret << std::endl;
+            outfile_illegal_inputs << command << std::endl << std::endl;
+            string tmp("mv input input.");
+            tmp += std::to_string(num_iters_);
+            system(tmp.c_str() );
+        }
+
+        // debug
+        command += "\n";
+        is_first_run = false;
+    }
+
+
+/*    void Search::LaunchProgram(const vector<value_double_t>& inputs) {
 
         string program_clean = program_ + "_c";
         string command;
@@ -290,6 +415,8 @@ namespace crest {
         is_first_run = false;
         //}
     }
+*/
+
 
 	void Search::RunProgram(const vector<value_double_t>& inputs, SymbolicExecution* ex) {
 		if (++num_iters_ > max_iters_) {
@@ -540,19 +667,19 @@ fprintf(stderr, "\nThe total time for constraint solving is %f seconds\n\n", sol
 			solver->GenerateConstraintsMPI(ex);
 		}
 
-clock_t tmp_time = clock();
-		// fprintf(stderr, "Yices . . . ");
-		bool success = solver->IncrementalSolve(ex.inputs(), ex.vars(), cs,
-				&soln);
-tmp_time = clock() - tmp_time;
-solver_time += (float)tmp_time / CLOCKS_PER_SEC;
+        clock_t tmp_time = clock();
+        // fprintf(stderr, "Yices . . . ");
+        bool success = solver->IncrementalSolve(ex.inputs(), ex.vars(), cs,
+                &soln);
+        tmp_time = clock() - tmp_time;
+        solver_time += (float)tmp_time / CLOCKS_PER_SEC;
 
         // fprintf(stderr, "%d\n", success);
 		constraints[branch_idx]->Negate();
 
-		if (success) {
-			// Merge the solution with the previous input to get the next
-			// input.  
+        if (success) {
+            // Merge the solution with the previous input to get the next
+            // input.  
             *input = ex.inputs();
 
             vector<value_t> original_rank_non_default;
@@ -564,32 +691,30 @@ solver_time += (float)tmp_time / CLOCKS_PER_SEC;
             for (SolnIt i = soln.begin(); i != soln.end(); ++i) {
                 (*input)[i->first] = i->second;
 
-                if (num_iters_ > 100) {
-                    for (size_t i = 0; i < rank_non_default_comm_indices_.size(); i++) {
-                        if (original_rank_non_default[i] != (*input)[rank_non_default_comm_indices_[i]]){
+                for (size_t i = 0; i < rank_non_default_comm_indices_.size(); i++) {
+                    if (original_rank_non_default[i] != 
+                            (*input)[rank_non_default_comm_indices_[i]]){
 
-                            int x = i;
-                            int y = (*input)[rank_non_default_comm_indices_[i]];
+                        int x = i;
+                        int y = (*input)[rank_non_default_comm_indices_[i]];
 
-                            //fprintf(stderr, "x: %d, y:%d\n", x, y);
-                            //fprintf(stderr, "x*:%d\n", ex.rank_non_default_comm_map_.size());
-                            //for (int i = 0; i < ex.rank_non_default_comm_map_.size(); i++)
-                            //fprintf(stderr, "y*:%d\n", ex.rank_non_default_comm_map_[i].size());
-                            //fflush(stderr);
+//fprintf(stderr, "x: %d, y:%d\n", x, y);
+//fprintf(stderr, "x*:%d\n", ex.rank_non_default_comm_map_.size());
+//for (int i = 0; i < ex.rank_non_default_comm_map_.size(); i++)
+//fprintf(stderr, "y*:%d\n", ex.rank_non_default_comm_map_[i].size());
+//fflush(stderr);
+                        int global_rank = ex.rank_non_default_comm_map_[x][y];
 
-                            int global_rank = ex.rank_non_default_comm_map_[x][y];
-
-                            //if (!rank_indices_.empty()) 
-                            for (size_t i = 0; i < rank_indices_.size(); i++) {
-                                (*input)[rank_indices_[i]] = global_rank;
-                            }
-                            break;
-                        }	
-                    }
+                        //if (!rank_indices_.empty()) 
+                        for (size_t i = 0; i < rank_indices_.size(); i++) {
+                            (*input)[rank_indices_[i]] = global_rank;
+                        }
+                        break;
+                    }	
                 }
-			}
-			return true;
-		}
+            }
+            return true;
+        }
 
 		return false;
 	}

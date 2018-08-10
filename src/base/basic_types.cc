@@ -17,17 +17,25 @@ using std::numeric_limits;
 
 namespace crest {
 
-	compare_op_t NegateCompareOp(compare_op_t op) {
-		return static_cast<compare_op_t>(op ^ 1);
-	}
+    compare_op_t NegateCompareOp(compare_op_t op) {
+        return static_cast<compare_op_t>(op ^ 1);
+    }
+    
+    /*
+       const char* kMinValueStr[] = { "0", "-128", "0", "-32768", "0", "-2147483648",
+       "0", "-2147483648", "0", "-9223372036854775808", };
 
-	const char* kMinValueStr[] = { "0", "-128", "0", "-32768", "0", "-2147483648",
-		"0", "-2147483648", "0", "-9223372036854775808", };
+       const char* kMaxValueStr[] = { "255", "127", "65535", "32767", "4294967295",
+       "2147483647", "4294967295", "2147483647", "18446744073709551615",
+       "9223372036854775807", };
+     */
 
-	const char* kMaxValueStr[] = { "255", "127", "65535", "32767", "4294967295",
-		"2147483647", "4294967295", "2147483647", "18446744073709551615",
-		"9223372036854775807", };
+    const char* kMinValueStr[] = { "0", "-128", "0", "-32768", "0", "-2147483648",
+        "0", "-2147483648", "0", "-2147483648", };
 
+    const char* kMaxValueStr[] = { "255", "127", "65535", "32767", "4294967295",
+        "2147483647",
+        "4294967295", "2147483647", "4294967295", "2147483647", };
 
 	// 
     // hEdit: Add two data types, i.e., FLOAT and DOUBLE, into the 

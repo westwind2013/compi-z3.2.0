@@ -657,7 +657,8 @@ if (stack_.size() > 1) {
             //{
             // When new marked variables is found, we need to
             // generate new values for them. 
-            ret = CastTo(rand() % (int)limit, type);	
+            //ret = CastTo(rand() % (int)limit, type);	
+            ret = 1;	
             // 
             // hEdit: synchronize the value among all processes
             //
@@ -700,7 +701,8 @@ if (stack_.size() > 1) {
             //{
             // When new marked variables is found, we need to
             // generate new values for them. 
-            ret = static_cast<double>(rand() % (int)limit);	
+            //ret = static_cast<double>(rand() % (int)limit);	
+            ret = 1.0;	
             // 
             // hEdit: synchronize the value among all processes
             //

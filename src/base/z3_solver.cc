@@ -34,6 +34,8 @@ using std::set;
 
 #define USE_RANGE_CHECK 1
 
+#define MAX_ASSUMP_NUM 100
+
 namespace crest {
 
 	typedef vector<const SymbolicPred*>::const_iterator PredIt;
@@ -160,7 +162,8 @@ namespace crest {
 	bool Z3Solver::IncrementalSolve(const vector<value_double_t>& old_soln,
 			const map<var_t,type_t>& vars,
 			vector<const SymbolicPred*>& constraints,
-			map<var_t,value_double_t>* soln) {
+			map<var_t,value_double_t>* soln,
+            unordered_set<int> excls) {
 		
 		const SymbolicPred* pointer2Last = constraints.back();
 
@@ -262,9 +265,12 @@ namespace crest {
         //fprintf(stderr, "\n\n\n");
         //fflush(stderr);
 
-		
-		soln->clear();
-		if (Solve(dependent_vars, dependent_constraints, soln)) {
+        set<var_t> target_vars;
+        pointer2Last->AppendVars(&target_vars);
+
+        soln->clear();
+		if (Solve(dependent_vars, dependent_constraints, soln, target_vars, 
+                excls)) {
 
             // 
             // hEdit: print the target constraint
@@ -871,9 +877,176 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
         return ret;
     }
 
+
+    void GetSolution(const map<var_t,type_t>& vars, Z3_context &ctx_z3, 
+            Z3_solver &slv_z3, map<var_t, 
+            value_double_t> *soln) {
+
+        Z3_model model_z3 = Z3_solver_get_model(ctx_z3, slv_z3);
+
+        // Get the number of constants assigned by the model
+        int num_constraints = Z3_model_get_num_consts(ctx_z3, model_z3);
+        //fprintf(stderr, "Entering solver: %d\n", num_constraints);
+
+        for (int i = 0; i < num_constraints; i++) {
+            int idx;
+            double val;
+            Z3_symbol name;
+            Z3_ast a, v;
+            Z3_bool ok;
+
+            // Get the i-th constant in the model
+            Z3_func_decl cnst = Z3_model_get_const_decl(ctx_z3, model_z3, i);
+            DEBUG(display_model(ctx_z3, stderr, model_z3));
+
+            // Get the constant declaration name 
+            name = Z3_get_decl_name(ctx_z3, cnst);
+            // Create a constant
+            a = Z3_mk_app(ctx_z3, cnst, 0, 0);
+            v = a;
+            ok = Z3_model_eval(ctx_z3, model_z3, a, Z3_FALSE, &v);
+            sscanf(Z3_get_symbol_string(ctx_z3, name), "x%d", &idx);
+
+            if (vars[idx] == types::FLOAT || vars[idx] == types::DOUBLE)
+                val = strtod(Z3_get_numeral_decimal_string(ctx_z3, v, 15), NULL);
+            else val = strtoll(Z3_get_numeral_decimal_string(ctx_z3, v, 15), NULL, 0);
+
+            DEBUG(fprintf(stderr, "%s %s | x%d %lf\n",
+                        Z3_get_symbol_string(ctx_z3, name),
+                        Z3_get_numeral_decimal_string(ctx_z3, v, 15),
+                        idx, val));
+            (*soln)[idx] = val;
+        }
+
+        return;
+    }
+
+
+    void OptimizeGroup(const map<var_t,type_t>& vars, Z3_context& ctx_z3, 
+            Z3_solver& slv_z3, map<var_t, value_double_t>* soln, 
+            map<var_t,Z3_ast>& x_expr_z3, 
+            Z3_sort& int_ty_z3, Z3_sort real_ty_z3, 
+            unordered_set<int>& excls) {
+
+        value_t lower, upper, prev;
+        value_t largest = -1;
+        for(auto &s: *soln) {
+            if (s.second > largest && excls.find(s.first) == excls.end() ) {
+                largest = s.second;
+            }
+        }
+
+        // do not optimize upon a negative value
+        if(largest < 2) return;
+
+        // fix some  values
+        for(auto &s: *soln) {
+            if (excls.find(s.first) != excls.end() ) {
+                Z3_ast val;
+                if (vars[s.first] == types::FLOAT || vars[s.first] == types::DOUBLE)
+                    val = Z3_mk_real(ctx_z3, s.second, real_ty_z3); 
+                else                
+                    val = Z3_mk_int(ctx_z3, s.second, int_ty_z3);
+
+                Z3_ast tmp = Z3_mk_eq(ctx_z3, x_expr_z3[s.first], val);
+                Z3_solver_assert(ctx_z3, slv_z3, tmp);
+            }
+        }
+
+
+        lower =  1;
+        prev = upper = largest + 1;
+
+        while (lower + 1 < upper) {
+            int mid = lower + (upper - lower)/2;
+            //string mid_s = to_string(mid);
+            Z3_ast bound = Z3_mk_int(ctx_z3, mid, int_ty_z3);
+            int i = 0;
+            Z3_ast args[MAX_ASSUMP_NUM];
+            for (auto &s: *soln) {
+                args[i++] = Z3_mk_lt(ctx_z3,
+                        x_expr_z3[s.first], bound);
+            }
+            Z3_lbool ret = Z3_solver_check_assumptions(ctx_z3,
+                    slv_z3, soln->size(), args);
+
+            if (ret == Z3_L_TRUE) {
+                upper = mid;
+            } else {
+                lower = mid;
+            }
+        }
+
+        Z3_ast bound = Z3_mk_int(ctx_z3, upper, int_ty_z3);
+        for (auto &s: *soln) {
+            if (excls.find(s.first) == excls.end() ) {
+                Z3_solver_assert(ctx_z3, slv_z3, Z3_mk_lt(
+                            ctx_z3, x_expr_z3[s.first], bound) );
+            }
+        }
+        return;
+    }
+
+
+    void OptimizeSingle(const map<var_t,type_t>& vars, Z3_context& ctx_z3, 
+            Z3_solver& slv_z3, map<var_t, value_double_t>* soln,
+            var_t target, map<var_t,Z3_ast>& x_expr_z3, 
+            Z3_sort& int_ty_z3, unordered_set<int>& excls) {
+
+        value_t lower, upper, prev;
+
+        // do not optimize upon a negative value
+        if ((*soln)[target] < 2) {
+            Z3_lbool ret = Z3_solver_check(ctx_z3, slv_z3);
+            if (ret == Z3_L_TRUE) {
+                GetSolution(vars, ctx_z3, slv_z3, soln);
+                fprintf(stderr, "Optimization 1\n");
+            }
+
+            return;
+        }
+
+        lower =  1;
+        prev = upper = (*soln)[target] + 1;
+
+        while (lower + 1 < upper) {
+            int mid = lower + (upper - lower)/2;
+            //string mid_s = to_string(mid);
+            Z3_ast bound = Z3_mk_int(ctx_z3, mid, int_ty_z3);
+            Z3_ast args[1] = {Z3_mk_lt(ctx_z3,
+                    x_expr_z3[target], bound) };
+            Z3_lbool ret = Z3_solver_check_assumptions(ctx_z3,
+                    slv_z3, 1, args);
+
+            if (ret == Z3_L_TRUE) {
+                upper = mid;
+            } else {
+                lower = mid;
+            }
+        }
+        if (prev > upper) {
+            // update the solution with a bigger value
+            Z3_ast trial = Z3_mk_lt(ctx_z3,
+                    x_expr_z3[target], Z3_mk_int(ctx_z3, upper, int_ty_z3) );
+            Z3_solver_assert(ctx_z3, slv_z3, trial);
+            Z3_lbool ret = Z3_solver_check(ctx_z3, slv_z3);
+
+            if (ret == Z3_L_TRUE) {
+                GetSolution(vars, ctx_z3, slv_z3, soln);
+                fprintf(stderr, "Optimization 2\n");
+            }
+        }
+
+        return;
+    }
+
+
+
     bool Z3Solver::Solve(const map<var_t,type_t>& vars,
             const vector<const SymbolicPred*>& constraints,
-            map<var_t,value_double_t>* soln) {
+            map<var_t,value_double_t>* soln,
+            set<var_t>& target_vars,
+            unordered_set<int> excls) {
 
         typedef map<var_t,type_t>::const_iterator VarIt;
 
@@ -915,6 +1088,9 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
             if (i->second == types::FLOAT || i->second == types::DOUBLE) { 
                 // Create an floating point  variable 
                 x_expr_z3[i->first] = mk_var(ctx_z3, buff, real_ty_z3);
+                // Exclude floating point variables
+                excls.insert(i->first);
+                
                 continue;
             } else {
                 // Create an integer variable 
@@ -955,49 +1131,35 @@ void display_function_interpretations(Z3_context c, FILE * out, Z3_model m)
             }
         }
 
-        Z3_model model_z3 = 0;
         // Check if the logical context is satisfiable
         Z3_lbool success_z3 = Z3_solver_check(ctx_z3, slv_z3);
 
         // Constraint set is satisfiable
         if (Z3_L_TRUE == success_z3) {
-            
-            model_z3 = Z3_solver_get_model(ctx_z3, slv_z3);
+            GetSolution(vars, ctx_z3, slv_z3, soln);
+            OptimizeGroup(vars, ctx_z3, slv_z3, soln,
+                    x_expr_z3, int_ty_z3, real_ty_z3, excls);
 
-            // Get the number of constants assigned by the model
-            int num_constraints = Z3_model_get_num_consts(ctx_z3, model_z3);
-//fprintf(stderr, "Entering solver: %d\n", num_constraints);
-            
-            for (int i = 0; i < num_constraints; i++) {
-                int idx;
-                double val;
-                Z3_symbol name;
-                Z3_ast a, v;
-                Z3_bool ok;
+            if (target_vars.size() == 1) {
+                for (auto &t: target_vars) {
+                    if (excls.find(t) != excls.end() ) {
+                        Z3_lbool ret = Z3_solver_check(ctx_z3, slv_z3);
+                        if (ret == Z3_L_TRUE) {
+                            GetSolution(vars, ctx_z3, slv_z3, soln);
+                            fprintf(stderr, "Optimization 1\n");
+                        }
 
-                // Get the i-th constant in the model
-                Z3_func_decl cnst = Z3_model_get_const_decl(ctx_z3, model_z3, i);
-                DEBUG(display_model(ctx_z3, stderr, model_z3));
-
-                // Get the constant declaration name 
-                name = Z3_get_decl_name(ctx_z3, cnst);
-                // Create a constant
-                a = Z3_mk_app(ctx_z3, cnst, 0, 0);
-                v = a;
-                ok = Z3_model_eval(ctx_z3, model_z3, a, Z3_FALSE, &v);
-                sscanf(Z3_get_symbol_string(ctx_z3, name), "x%d", &idx);
-                
-                if (vars[idx] == types::FLOAT || vars[idx] == types::DOUBLE)
-                    val = strtod(Z3_get_numeral_decimal_string(ctx_z3, v, 15), NULL);
-                else val = strtoll(Z3_get_numeral_decimal_string(ctx_z3, v, 15), NULL, 0);
-
-                DEBUG(fprintf(stderr, "%s %s | x%d %lf\n",
-                            Z3_get_symbol_string(ctx_z3, name),
-                            Z3_get_numeral_decimal_string(ctx_z3, v, 15),
-                            idx, val));
-                soln->insert(make_pair(idx, val));
-//fprintf(stderr, "sat: %d, %lf\n", idx, val);
-
+                        break;
+                    }
+                    OptimizeSingle(vars, ctx_z3, slv_z3, soln, t,
+                            x_expr_z3, int_ty_z3, excls);
+                }
+            } else {
+                Z3_lbool ret = Z3_solver_check(ctx_z3, slv_z3);
+                if (ret == Z3_L_TRUE) {
+                    GetSolution(vars, ctx_z3, slv_z3, soln);
+                    fprintf(stderr, "Optimization 1\n");
+                }
             }
         } else if (success_z3 == Z3_L_FALSE) {
             DEBUG(fprintf(stderr, "ERR:  fail to solve\n"));

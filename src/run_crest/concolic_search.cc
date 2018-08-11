@@ -667,10 +667,13 @@ fprintf(stderr, "\nThe total time for constraint solving is %f seconds\n\n", sol
 			solver->GenerateConstraintsMPI(ex);
 		}
 
+        unordered_set<int> excls;
+        for(auto &i: world_size_indices_) excls.insert(i);
+        
         clock_t tmp_time = clock();
         // fprintf(stderr, "Yices . . . ");
         bool success = solver->IncrementalSolve(ex.inputs(), ex.vars(), cs,
-                &soln);
+                &soln, excls);
         tmp_time = clock() - tmp_time;
         solver_time += (float)tmp_time / CLOCKS_PER_SEC;
 

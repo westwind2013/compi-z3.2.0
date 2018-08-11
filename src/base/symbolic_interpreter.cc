@@ -675,7 +675,7 @@ if (stack_.size() > 1) {
 
 	value_t SymbolicInterpreter::NewInputWithLimit(type_t type, addr_t addr, value_double_t limit) {
 	
-		ex_.limits_[num_inputs_] = limit;
+		//ex_.limits_[num_inputs_] = limit;
 		return NewInput(type, addr, limit);
 	}
 

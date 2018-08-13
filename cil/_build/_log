@@ -44,7 +44,7 @@ make -C .. _build/machdep.ml # cached
 # Target: src/cilutil.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/cilutil.cmo, file:src/cilutil.ml, implem, ocaml, quiet, traverse }
 /usr/bin/ocamlc -c -g -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/cilutil.cmo src/cilutil.ml # cached
 # Target: src/ext/crestAll.ml.depends, tags: { extension:ml, file:src/ext/crestAll.ml, ocaml, ocamldep, quiet, traverse }
-/usr/bin/ocamldep -modules src/ext/crestAll.ml > src/ext/crestAll.ml.depends
+/usr/bin/ocamldep -modules src/ext/crestAll.ml > src/ext/crestAll.ml.depends # cached
 # Target: src/ext/cfg.mli.depends, tags: { extension:mli, file:src/ext/cfg.mli, ocaml, ocamldep, quiet, traverse }
 /usr/bin/ocamldep -modules src/ext/cfg.mli > src/ext/cfg.mli.depends # cached
 # Target: src/ext/cfg.cmi, tags: { byte, compile, extension:mli, file:src/ext/cfg.mli, interf, ocaml, quiet, traverse }
@@ -57,6 +57,8 @@ make -C .. _build/machdep.ml # cached
 /usr/bin/ocamldep -modules src/ext/simplemem.ml > src/ext/simplemem.ml.depends # cached
 # Target: src/ext/simplemem.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/ext/simplemem.cmo, file:src/ext/simplemem.ml, implem, ocaml, quiet, traverse }
 /usr/bin/ocamlc -c -g -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/simplemem.cmo src/ext/simplemem.ml # cached
+# Target: src/ext/crestAll.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/ext/crestAll.cmo, file:src/ext/crestAll.ml, implem, ocaml, quiet, traverse }
+/usr/bin/ocamlc -c -g -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestAll.cmo src/ext/crestAll.ml # cached
 # Target: src/ext/crestBranch.ml.depends, tags: { extension:ml, file:src/ext/crestBranch.ml, ocaml, ocamldep, quiet, traverse }
 /usr/bin/ocamldep -modules src/ext/crestBranch.ml > src/ext/crestBranch.ml.depends # cached
 # Target: src/ext/crestBranch.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/ext/crestBranch.cmo, file:src/ext/crestBranch.ml, implem, ocaml, quiet, traverse }
@@ -155,13 +157,8 @@ make -C .. _build/feature_config.ml # cached
 /usr/bin/ocamldep -modules ocamlutil/stats.mli > ocamlutil/stats.mli.depends # cached
 # Target: ocamlutil/stats.cmi, tags: { byte, compile, extension:mli, file:ocamlutil/stats.mli, interf, ocaml, quiet, traverse }
 /usr/bin/ocamlc -c -I ocamlutil -I src -I src/ext -I src/frontc -I src/ext/pta -o ocamlutil/stats.cmi ocamlutil/stats.mli # cached
-# Target: src/ext/crestAll.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/ext/crestAll.cmo, file:src/ext/crestAll.ml, implem, ocaml, quiet, traverse }
-/usr/bin/ocamlc -c -g -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestAll.cmo src/ext/crestAll.ml
-+ /usr/bin/ocamlc -c -g -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestAll.cmo src/ext/crestAll.ml
-File "src/ext/crestAll.ml", line 580, characters 5-6:
-Warning 11: this match case is unused.
 # Target: src/main.cmo, tags: { byte, compile, debug, extension:cmo, extension:ml, file:src/main.cmo, file:src/main.ml, implem, ocaml, quiet, traverse }
-/usr/bin/ocamlc -c -g -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/main.cmo src/main.ml
+/usr/bin/ocamlc -c -g -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/main.cmo src/main.ml # cached
 # Target: src/ext/callgraph.ml.depends, tags: { extension:ml, file:src/ext/callgraph.ml, ocaml, ocamldep, quiet, traverse }
 /usr/bin/ocamldep -modules src/ext/callgraph.ml > src/ext/callgraph.ml.depends # cached
 # Target: src/cil.ml.depends, tags: { extension:ml, file:src/cil.ml, ocaml, ocamldep, quiet, traverse }
@@ -362,6 +359,8 @@ make -C .. _build/cilversion.ml # cached
 /usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/oneret.cmx src/ext/oneret.ml # cached
 # Target: src/ext/simplemem.cmx, tags: { compile, extension:cmx, extension:ml, file:src/ext/simplemem.cmx, file:src/ext/simplemem.ml, implem, native, ocaml, quiet, traverse }
 /usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/simplemem.cmx src/ext/simplemem.ml # cached
+# Target: src/ext/crestAll.cmx, tags: { compile, extension:cmx, extension:ml, file:src/ext/crestAll.cmx, file:src/ext/crestAll.ml, implem, native, ocaml, quiet, traverse }
+/usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestAll.cmx src/ext/crestAll.ml # cached
 # Target: src/ext/crestBranch.cmx, tags: { compile, extension:cmx, extension:ml, file:src/ext/crestBranch.cmx, file:src/ext/crestBranch.ml, implem, native, ocaml, quiet, traverse }
 /usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestBranch.cmx src/ext/crestBranch.ml # cached
 # Target: src/ext/crestInstrument.cmx, tags: { compile, extension:cmx, extension:ml, file:src/ext/crestInstrument.cmx, file:src/ext/crestInstrument.ml, implem, native, ocaml, quiet, traverse }
@@ -428,13 +427,8 @@ make -C .. _build/cilversion.ml # cached
 /usr/bin/ocamldep -modules src/ext/simplify.ml > src/ext/simplify.ml.depends # cached
 # Target: src/ext/simplify.cmx, tags: { compile, extension:cmx, extension:ml, file:src/ext/simplify.cmx, file:src/ext/simplify.ml, implem, native, ocaml, quiet, traverse }
 /usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/simplify.cmx src/ext/simplify.ml # cached
-# Target: src/ext/crestAll.cmx, tags: { compile, extension:cmx, extension:ml, file:src/ext/crestAll.cmx, file:src/ext/crestAll.ml, implem, native, ocaml, quiet, traverse }
-/usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestAll.cmx src/ext/crestAll.ml
-+ /usr/bin/ocamlopt -c -I src/ext -I src -I ocamlutil -I src/frontc -I src/ext/pta -o src/ext/crestAll.cmx src/ext/crestAll.ml
-File "src/ext/crestAll.ml", line 580, characters 5-6:
-Warning 11: this match case is unused.
 # Target: src/main.cmx, tags: { compile, extension:cmx, extension:ml, file:src/main.cmx, file:src/main.ml, implem, native, ocaml, quiet, traverse }
-/usr/bin/ocamlopt -c -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/main.cmx src/main.ml
+/usr/bin/ocamlopt -c -I src -I ocamlutil -I src/ext -I src/frontc -I src/ext/pta -o src/main.cmx src/main.ml # cached
 # Target: src/ext/availexps.ml.depends, tags: { extension:ml, file:src/ext/availexps.ml, ocaml, ocamldep, quiet, traverse }
 /usr/bin/ocamldep -modules src/ext/availexps.ml > src/ext/availexps.ml.depends # cached
 # Target: src/ext/expcompare.ml.depends, tags: { extension:ml, file:src/ext/expcompare.ml, ocaml, ocamldep, quiet, traverse }
@@ -562,5 +556,5 @@ Warning 11: this match case is unused.
 # Target: src/cil.cmxa, tags: { extension:cmxa, file:src/cil.cmxa, library, link, native, ocaml, quiet, traverse }
 /usr/bin/ocamlopt -a ocamlutil/pretty.cmx ocamlutil/errormsg.cmx ocamlutil/alpha.cmx cilversion.cmx machdep.cmx ocamlutil/clist.cmx ocamlutil/inthash.cmx ocamlutil/stats.cmx ocamlutil/util.cmx src/cilint.cmx src/escape.cmx src/cil.cmx src/ext/dataflow.cmx src/ext/expcompare.cmx src/ext/usedef.cmx src/ext/availexps.cmx src/ext/availexpslv.cmx ocamlutil/bitmap.cmx src/frontc/cabs.cmx ocamlutil/longarray.cmx ocamlutil/growArray.cmx ocamlutil/trace.cmx src/cilutil.cmx src/frontc/cabshelper.cmx src/frontc/cabsvisit.cmx src/frontc/whitetrack.cmx src/frontc/cprint.cmx src/frontc/cabs2cil.cmx src/ext/callgraph.cmx src/ext/canonicalize.cmx src/ext/cfg.cmx src/check.cmx src/cillower.cmx src/frontc/lexerhack.cmx src/frontc/cparser.cmx src/frontc/clexer.cmx src/frontc/patch.cmx src/frontc/frontc.cmx src/machdepenv.cmx src/mergecil.cmx src/rmtmps.cmx src/ciloptions.cmx src/ext/ciltools.cmx src/ext/dataslicing.cmx src/ext/liveness.cmx src/ext/reachingdefs.cmx src/ext/deadcodeelim.cmx src/ext/dominators.cmx src/ext/epicenter.cmx feature_config.cmx src/formatparse.cmx src/formatlex.cmx src/formatcil.cmx src/ext/heap.cmx src/ext/heapify.cmx src/ext/llvmutils.cmx src/ext/llvmgen.cmx src/ext/llvmssa.cmx src/ext/llvm.cmx src/ext/logcalls.cmx src/ext/logwrites.cmx src/ext/pta/setp.cmx src/ext/pta/uref.cmx src/ext/pta/olf.cmx src/ext/oneret.cmx src/ext/pta/ptranal.cmx src/ext/partial.cmx src/ext/predabst.cmx src/ext/sfi.cmx src/ext/simplemem.cmx src/ext/simplify.cmx src/ext/ssa.cmx -o src/cil.cmxa # cached
 # Target: src/main.native, tags: { dont_link_with, extension:native, file:src/main.native, link, native, ocaml, program, quiet, traverse, use_cil, use_nums, use_str, use_unix }
-/usr/bin/ocamlopt unix.cmxa str.cmxa nums.cmxa src/cil.cmxa src/ext/crestAll.cmx src/ext/crestBranch.cmx src/ext/crestInstrument.cmx src/main.cmx -o src/main.native
+/usr/bin/ocamlopt unix.cmxa str.cmxa nums.cmxa src/cil.cmxa src/ext/crestAll.cmx src/ext/crestBranch.cmx src/ext/crestInstrument.cmx src/main.cmx -o src/main.native # cached
 # Compilation successful.

@@ -346,11 +346,11 @@ let addressOf : lval -> exp = mkAddrOrStartOf
 (* hComment: what is this? *)
 let hasAddress (_, off) =
     let rec containsBitField off =
-    match off with
-        | NoOffset         -> false
-        | Field (fi, off) -> (isSome fi.fbitfield) || (containsBitField off)
-        | Index (_, off)  -> containsBitField off
-    in
+        match off with
+            | NoOffset         -> false
+            | Field (fi, off) -> (isSome fi.fbitfield) || (containsBitField off)
+            | Index (_, off)  -> containsBitField off
+        in
     not (containsBitField off)
 
 
@@ -474,18 +474,18 @@ class crestInstrumentVisitor f =
      * floating point or not
     *)
     let isRetValFloat e1 e2 = 
-        match typeOf e1 with 
+        match (unrollType (typeOf e1)) with 
             | TFloat(_) -> true
             | _ -> 
                 (
-                match typeOf e2 with
+                match (unrollType (typeOf e2)) with
                     | TFloat(_) -> true
                     | _ -> false
                 )
     in
 
     let isLvalFloat lv = 
-        match typeOfLval lv with 
+        match (unrollType (typeOfLval lv)) with 
             | TFloat(_) -> 1
             | _ -> 0
     in
@@ -602,7 +602,18 @@ class crestInstrumentVisitor f =
 				)
 			| _ -> [];
 	in
-	
+
+
+    let rec print_struct st = match st with
+        | [] -> print_endline
+        | head::body ->
+            (
+            print_endline head.fname;
+            print_struct body;
+            )
+    in
+
+    
 	(*
 	* Instrument an expression.
 	*)
@@ -611,34 +622,40 @@ class crestInstrumentVisitor f =
         * hEdit: fix a bug, which is unable to identify a negative real value
         *)
         if isConstant e then
-            match typeOf e with
+            match (unrollType (typeOf e)) with
             | TFloat(_) ->
                 [mkLoadFD noAddr e]
             | _ ->        
                 [mkLoad noAddr e]
-
-(*                match e with
-                | Const(CInt64(_)) ->
-                        [mkLoad noAddr e]
-                | Const(CChr(_)) ->
-                        [mkLoad noAddr e]
-                | _ ->
-                        [mkLoadFD noAddr e]
-			match e with 
-            | Const(CReal(_)) -> 
-                [mkLoadFD noAddr e]
-            | _ ->
-                [mkLoad noAddr e]
-*)
 		else
 		match e with
 			| Lval lv when hasAddress lv ->
 			    (
                     match lv with 
-                        | (Var v, _) -> 
-                            ( match v.vtype with
-                                | TFloat(_, _) ->
+                        | (Var v, off) -> 
+                            ( match (unrollType v.vtype) with
+                                | TFloat(_) ->
                                     [mkLoadFD (addressOf lv) e]
+                                | TComp(comp, _) ->
+                                    (* ignore (Errormsg.log "Struct %s\n"
+                                        comp.cname);
+                                    print_struct comp.cfields;
+                                    ignore (Errormsg.log "Expression %a\n"
+                                        d_exp e);
+                                    ignore (Errormsg.log "Lval %a\n"
+                                        d_lval lv); *)
+                                    ( match off with
+                                        | Field(f, _) ->
+                                            ( 
+                                            match (unrollType f.ftype) with 
+                                                | TFloat(_) ->
+                                                    [mkLoadFD (addressOf lv) e]
+                                                | _ ->
+                                                    [mkLoad (addressOf lv) e]
+                                            )
+                                        | _ ->
+                                            [mkLoad (addressOf lv) e]
+                                    )
                                 | _ -> 
                                     [mkLoad (addressOf lv) e]
                             )

@@ -1,4 +1,5 @@
 // Copyright (c) 2008, Jacob Burnim (jburnim@cs.berkeley.edu)
+// Copyright (c) 2018, Hongbo Li (hli035@cs.ucr.edu)
 //
 // This file is part of CREST, which is distributed under the revised
 // BSD license.  A copy of this license can be found in the file LICENSE.

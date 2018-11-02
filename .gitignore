@@ -15,6 +15,7 @@ test/sendrecv2/
 *.slo
 *.lo
 *.o
+*.i
 
 # Compiled Dynamic libraries
 *.so
